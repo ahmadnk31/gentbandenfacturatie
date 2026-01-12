@@ -117,3 +117,30 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  #invoice-card,
+  #invoice-card * {
+    visibility: visible;
+  }
+
+  #invoice-card {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20mm;
+    /* Add padding to simulate margins */
+  }
+
+  @page {
+    margin: 0;
+    /* Removing margins hides browser header/footer */
+    size: auto;
+  }
+}

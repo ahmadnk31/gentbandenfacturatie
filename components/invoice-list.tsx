@@ -11,12 +11,23 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Send, Trash2, MoreHorizontal, Download } from 'lucide-react';
 import { deleteInvoice } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useOptimistic, useTransition } from 'react';
 
 interface InvoiceListProps {
     invoices: InvoiceWithRelations[];
@@ -25,18 +36,23 @@ interface InvoiceListProps {
 export function InvoiceList({ invoices }: InvoiceListProps) {
     const router = useRouter();
     const [loading, setLoading] = useState<string | null>(null);
+    const [isPending, startTransition] = useTransition();
+
+    const [optimisticInvoices, removeOptimisticInvoice] = useOptimistic(
+        invoices,
+        (state, id: string) => state.filter((invoice) => invoice.id !== id)
+    );
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Weet je zeker dat je deze factuur wilt verwijderen?')) return;
-        setLoading(id);
-        try {
-            await deleteInvoice(id);
-            router.refresh();
-        } catch (error) {
-            console.error('Error deleting invoice:', error);
-        } finally {
-            setLoading(null);
-        }
+        startTransition(async () => {
+            removeOptimisticInvoice(id);
+            try {
+                await deleteInvoice(id);
+            } catch (error) {
+                console.error('Error deleting invoice:', error);
+                alert('Kon factuur niet verwijderen');
+            }
+        });
     };
 
     const handleDownload = async (invoice: InvoiceWithRelations) => {
@@ -95,7 +111,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
         }
     };
 
-    if (invoices.length === 0) {
+    if (optimisticInvoices.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
                 <div className="mb-4 rounded-full bg-muted p-4">
@@ -126,7 +142,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                     </TableRow>
                 </TableHeader>
                 <TableBody>
-                    {invoices.map((invoice) => (
+                    {optimisticInvoices.map((invoice) => (
                         <TableRow key={invoice.id}>
                             <TableCell className="font-medium">{invoice.invoiceNumber}</TableCell>
                             <TableCell>
@@ -173,15 +189,36 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                                             <Send className="h-4 w-4" />
                                         </Button>
                                     )}
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        onClick={() => handleDelete(invoice.id)}
-                                        disabled={loading === invoice.id}
-                                        title="Verwijderen"
-                                    >
-                                        <Trash2 className="h-4 w-4 text-destructive" />
-                                    </Button>
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                disabled={loading === invoice.id}
+                                                title="Verwijderen"
+                                            >
+                                                <Trash2 className="h-4 w-4 text-destructive" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Weet je het zeker?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    Je staat op het punt factuur {invoice.invoiceNumber} te verwijderen.
+                                                    Dit kan niet ongedaan worden gemaakt.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Annuleren</AlertDialogCancel>
+                                                <AlertDialogAction
+                                                    onClick={() => handleDelete(invoice.id)}
+                                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                >
+                                                    Verwijderen
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
                                 </div>
                             </TableCell>
                         </TableRow>

@@ -92,6 +92,38 @@ export function InvoiceEmail({ invoice }: InvoiceEmailProps) {
 
                     <Hr style={divider} />
 
+                    {/* Vehicle Info */}
+                    {(invoice.licensePlate || invoice.vehicleModel || invoice.mileage) && (
+                        <>
+                            <Section>
+                                <Text style={label}>Voertuig</Text>
+                                <Row>
+                                    {invoice.licensePlate && (
+                                        <Column>
+                                            <Text style={subLabel}>Kenteken</Text>
+                                            <Text style={value}>{invoice.licensePlate}</Text>
+                                        </Column>
+                                    )}
+                                    {invoice.vehicleModel && (
+                                        <Column>
+                                            <Text style={subLabel}>Merk & Model</Text>
+                                            <Text style={value}>{invoice.vehicleModel}</Text>
+                                        </Column>
+                                    )}
+                                    {invoice.mileage && (
+                                        <Column>
+                                            <Text style={subLabel}>Kilometerstand</Text>
+                                            <Text style={value}>{invoice.mileage.toLocaleString()} km</Text>
+                                        </Column>
+                                    )}
+                                </Row>
+                            </Section>
+                            <Hr style={divider} />
+                        </>
+                    )}
+
+                    <Hr style={divider} />
+
                     {/* Items */}
                     <Section>
                         <Text style={label}>Factuurregels</Text>
@@ -216,6 +248,14 @@ const label = {
     fontWeight: '500',
     textTransform: 'uppercase' as const,
     margin: '0 0 5px',
+};
+
+const subLabel = {
+    color: '#666666',
+    fontSize: '10px',
+    fontWeight: '500',
+    textTransform: 'uppercase' as const,
+    margin: '0 0 2px',
 };
 
 const value = {

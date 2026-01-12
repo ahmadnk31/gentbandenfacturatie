@@ -242,6 +242,33 @@ export function InvoicePDF({ invoice }: InvoicePDFProps) {
                     )}
                 </View>
 
+                {/* Vehicle Section */}
+                {(invoice.licensePlate || invoice.vehicleModel || invoice.mileage) && (
+                    <View style={styles.section}>
+                        <Text style={styles.sectionTitle}>Voertuig</Text>
+                        <View style={{ flexDirection: 'row', gap: 40 }}>
+                            {invoice.licensePlate && (
+                                <View>
+                                    <Text style={styles.headerText}>Kenteken</Text>
+                                    <Text style={styles.cellText}>{invoice.licensePlate}</Text>
+                                </View>
+                            )}
+                            {invoice.vehicleModel && (
+                                <View>
+                                    <Text style={styles.headerText}>Merk & Model</Text>
+                                    <Text style={styles.cellText}>{invoice.vehicleModel}</Text>
+                                </View>
+                            )}
+                            {invoice.mileage && (
+                                <View>
+                                    <Text style={styles.headerText}>Kilometerstand</Text>
+                                    <Text style={styles.cellText}>{invoice.mileage.toLocaleString()} km</Text>
+                                </View>
+                            )}
+                        </View>
+                    </View>
+                )}
+
                 {/* Items Table */}
                 <View style={styles.table}>
                     <View style={styles.tableHeader}>

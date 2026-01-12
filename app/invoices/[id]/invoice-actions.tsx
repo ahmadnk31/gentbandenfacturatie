@@ -73,7 +73,7 @@ export function InvoiceActions({ invoice }: InvoiceActionsProps) {
     };
 
     return (
-        <div className="flex gap-2">
+        <div className="flex gap-2 overflow-x-auto">
             <Button variant="outline" onClick={() => window.print()}>
                 <Printer className="mr-2 h-4 w-4" />
                 Afdrukken

@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FileText, Plus, Home } from 'lucide-react';
+import { FileText, Plus, Home, LogOut } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { logout } from '@/app/login/actions';
 
 export function Header() {
     const pathname = usePathname();
@@ -46,6 +47,15 @@ export function Header() {
                             </Link>
                         );
                     })}
+                    <form action={logout}>
+                        <button
+                            type="submit"
+                            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary/50 hover:text-foreground"
+                        >
+                            <LogOut className="h-4 w-4" />
+                            <span className="hidden md:inline-block">Uitloggen</span>
+                        </button>
+                    </form>
                 </nav>
             </div>
         </header>

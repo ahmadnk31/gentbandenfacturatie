@@ -4,6 +4,7 @@
 import { CreateInvoiceInput, InvoiceWithRelations } from '@/types/invoice';
 import { Decimal } from '@prisma/client/runtime/index-browser';
 import prisma from './prisma';
+import { revalidatePath } from 'next/cache';
 
 // Generate unique invoice number: INV-YYYYMM-XXXX
 async function generateInvoiceNumber(): Promise<string> {
@@ -155,6 +156,7 @@ export async function deleteInvoice(id: string): Promise<boolean> {
         // Delete associated payment
         await prisma.payment.delete({ where: { id: invoice.paymentId } });
 
+        revalidatePath('/invoices');
         return true;
     } catch {
         return false;
