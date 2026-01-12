@@ -1,0 +1,541 @@
+'use client';
+
+import { useState, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
+import { Plus, Trash2, Send, Save, Loader2, Receipt } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from '@/components/ui/table';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { CreateInvoiceInput, InvoiceItemInput } from '@/types/invoice';
+import { invoiceConfig } from '@/lib/shop-config';
+import {
+    generateItemId,
+    calculateItemTotal,
+    formatCurrency,
+    VAT_RATES,
+} from '@/lib/invoice-utils';
+import { createInvoice } from '@/lib/actions';
+import { useEffect } from 'react';
+
+const STORAGE_KEY = 'invoice-form-draft';
+
+export function InvoiceForm() {
+    const router = useRouter();
+    const [isLoading, setIsLoading] = useState(false);
+    const [isSending, setIsSending] = useState(false);
+
+    // Customer state
+    const [customerType, setCustomerType] = useState<'PRIVATE' | 'BUSINESS'>('PRIVATE');
+    const [customerName, setCustomerName] = useState('');
+    const [customerEmail, setCustomerEmail] = useState('');
+    const [customerAddress, setCustomerAddress] = useState('');
+    const [customerVatNumber, setCustomerVatNumber] = useState('');
+
+    // Vehicle state
+    const [licensePlate, setLicensePlate] = useState('');
+    const [mileage, setMileage] = useState('');
+    const [vehicleModel, setVehicleModel] = useState('');
+
+    // Payment state
+    const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'PIN' | 'ONLINE'>('PIN');
+
+    // Items state
+    const [items, setItems] = useState<InvoiceItemInput[]>([
+        { id: generateItemId(), description: '', quantity: 1, unitPrice: '', vatRate: 21, total: 0 },
+    ]);
+
+    // Load from local storage
+    useEffect(() => {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                setCustomerType(parsed.customerType || 'PRIVATE');
+                setCustomerName(parsed.customerName || '');
+                setCustomerEmail(parsed.customerEmail || '');
+                setCustomerAddress(parsed.customerAddress || '');
+                setCustomerVatNumber(parsed.customerVatNumber || '');
+                setLicensePlate(parsed.licensePlate || '');
+                setMileage(parsed.mileage || '');
+                setVehicleModel(parsed.vehicleModel || '');
+                setPaymentMethod(parsed.paymentMethod || 'PIN');
+                if (parsed.items && parsed.items.length > 0) {
+                    setItems(parsed.items);
+                }
+            } catch (e) {
+                console.error('Failed to load draft invoice', e);
+            }
+        }
+    }, []);
+
+    // Save to local storage
+    useEffect(() => {
+        const draft = {
+            customerType,
+            customerName,
+            customerEmail,
+            customerAddress,
+            customerVatNumber,
+            licensePlate,
+            mileage,
+            vehicleModel,
+            paymentMethod,
+            items,
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
+    }, [
+        customerType,
+        customerName,
+        customerEmail,
+        customerAddress,
+        customerVatNumber,
+        licensePlate,
+        mileage,
+        vehicleModel,
+        paymentMethod,
+        items,
+    ]);
+
+    // Calculations
+    const subtotal = useMemo(
+        () => items.reduce((sum, item) => sum + item.total, 0),
+        [items]
+    );
+
+    const vatAmount = useMemo(
+        () => items.reduce((sum, item) => sum + (item.total * item.vatRate) / 100, 0),
+        [items]
+    );
+
+    const total = useMemo(() => subtotal + vatAmount, [subtotal, vatAmount]);
+
+    const updateItem = (id: string, field: keyof InvoiceItemInput, value: string | number) => {
+        setItems((prev) =>
+            prev.map((item) => {
+                if (item.id !== id) return item;
+                const updated = { ...item, [field]: value };
+                if (field === 'quantity' || field === 'unitPrice') {
+                    // Recalculate total with new values
+                    updated.total = calculateItemTotal(
+                        field === 'quantity' ? value : item.quantity,
+                        field === 'unitPrice' ? value : item.unitPrice
+                    );
+                }
+                return updated;
+            })
+        );
+    };
+
+    const addItem = () => {
+        setItems((prev) => [
+            ...prev,
+            { id: generateItemId(), description: '', quantity: 1, unitPrice: '', vatRate: 21, total: 0 },
+        ]);
+    };
+
+    const removeItem = (id: string) => {
+        if (items.length > 1) {
+            setItems((prev) => prev.filter((item) => item.id !== id));
+        }
+    };
+
+    const addTireTemplate = () => {
+        setItems((prev) => [
+            ...prev,
+            {
+                id: generateItemId(),
+                description: '205/55 R16 91V Michelin Primacy 4',
+                quantity: 2,
+                unitPrice: 120,
+                vatRate: 21,
+                total: calculateItemTotal(2, 120)
+            },
+            {
+                id: generateItemId(),
+                description: 'Montage & Balanceren',
+                quantity: 2,
+                unitPrice: 15,
+                vatRate: 21,
+                total: calculateItemTotal(2, 15)
+            },
+            {
+                id: generateItemId(),
+                description: 'Verwijderingsbijdrage',
+                quantity: 2,
+                unitPrice: 2.50,
+                vatRate: 21,
+                total: calculateItemTotal(2, 2.50)
+            }
+        ]);
+    };
+
+    const handleSubmit = async (sendEmail: boolean) => {
+        if (!customerName.trim()) {
+            alert('Vul een klantnaam in');
+            return;
+        }
+
+        if (items.every((item) => !item.description.trim())) {
+            alert('Voeg minimaal één item toe');
+            return;
+        }
+
+        setIsLoading(true);
+        if (sendEmail) setIsSending(true);
+
+        try {
+            const input: CreateInvoiceInput = {
+                customerType,
+                customerName,
+                customerEmail: customerEmail || undefined,
+                customerAddress: customerAddress || undefined,
+                customerVatNumber: customerType === 'BUSINESS' ? customerVatNumber : undefined,
+                paymentMethod,
+                items: items.filter((item) => item.description.trim()),
+
+                // Vehicle details
+                licensePlate: licensePlate || undefined,
+                mileage: mileage ? parseInt(mileage) : undefined,
+                vehicleModel: vehicleModel || undefined,
+            };
+
+            const invoice = await createInvoice(input);
+
+            if (sendEmail && customerEmail) {
+                const response = await fetch('/api/send-invoice', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(invoice),
+                });
+
+                if (response.ok) {
+                    alert(`Factuur verzonden naar ${customerEmail}`);
+                } else {
+                    const result = await response.json();
+                    alert(`Email fout: ${result.error}`);
+                }
+            }
+
+            router.push(`/invoices/${invoice.id}`);
+            router.refresh();
+
+            // Clear draft on success
+            localStorage.removeItem(STORAGE_KEY);
+        } catch (error) {
+            console.error('Error creating invoice:', error);
+            alert('Er is een fout opgetreden');
+        } finally {
+            setIsLoading(false);
+            setIsSending(false);
+        }
+    };
+
+    return (
+        <div className="space-y-6">
+            {/* Customer & Payment */}
+            <div className="grid gap-6 lg:grid-cols-2">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Klantgegevens</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Type klant</Label>
+                            <Select
+                                value={customerType}
+                                onValueChange={(v) => setCustomerType(v as 'PRIVATE' | 'BUSINESS')}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="PRIVATE">Particulier</SelectItem>
+                                    <SelectItem value="BUSINESS">Zakelijk</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="customerName">Naam *</Label>
+                            <Input
+                                id="customerName"
+                                value={customerName}
+                                onChange={(e) => setCustomerName(e.target.value)}
+                                placeholder={customerType === 'BUSINESS' ? 'Bedrijfsnaam' : 'Naam klant'}
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="customerEmail">E-mail</Label>
+                            <Input
+                                id="customerEmail"
+                                type="email"
+                                value={customerEmail}
+                                onChange={(e) => setCustomerEmail(e.target.value)}
+                                placeholder="klant@email.nl"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="customerAddress">Adres</Label>
+                            <Input
+                                id="customerAddress"
+                                value={customerAddress}
+                                onChange={(e) => setCustomerAddress(e.target.value)}
+                                placeholder="Straat, Postcode Plaats"
+                            />
+                        </div>
+
+                        {customerType === 'BUSINESS' && (
+                            <div className="space-y-2">
+                                <Label htmlFor="vatNumber">BTW-nummer</Label>
+                                <Input
+                                    id="vatNumber"
+                                    value={customerVatNumber}
+                                    onChange={(e) => setCustomerVatNumber(e.target.value)}
+                                    placeholder="NL123456789B01"
+                                />
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Betaling</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Betaalmethode</Label>
+                            <Select
+                                value={paymentMethod}
+                                onValueChange={(v) => setPaymentMethod(v as 'CASH' | 'PIN' | 'ONLINE')}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="CASH">Contant</SelectItem>
+                                    <SelectItem value="PIN">PIN</SelectItem>
+                                    <SelectItem value="ONLINE">Online</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="mt-8 rounded-lg bg-muted/50 p-4">
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Receipt className="h-4 w-4" />
+                                <span>Factuur wordt automatisch aangemaakt na opslaan</span>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
+
+            {/* Vehicle Details */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Voertuiggegevens</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="grid gap-6 md:grid-cols-3">
+                        <div className="space-y-2">
+                            <Label htmlFor="licensePlate">Kenteken</Label>
+                            <Input
+                                id="licensePlate"
+                                value={licensePlate}
+                                onChange={(e) => setLicensePlate(e.target.value.toUpperCase())}
+                                placeholder="1-ABC-123"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="mileage">Kilometerstand</Label>
+                            <Input
+                                id="mileage"
+                                type="number"
+                                value={mileage}
+                                onChange={(e) => setMileage(e.target.value)}
+                                placeholder="150000"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="vehicleModel">Merk & Model</Label>
+                            <Input
+                                id="vehicleModel"
+                                value={vehicleModel}
+                                onChange={(e) => setVehicleModel(e.target.value)}
+                                placeholder="Volkswagen Golf"
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Invoice Items */}
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between overflow-x-auto">
+                    <CardTitle>Factuurregels</CardTitle>
+                    <div className="flex gap-2">
+                        <Button variant="secondary" size="sm" onClick={addTireTemplate}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Banden Set
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={addItem}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Regel toevoegen
+                        </Button>
+                    </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {items.map((item, index) => (
+                        <div
+                            key={item.id}
+                            className="rounded-lg border bg-card p-4 space-y-4"
+                        >
+                            <div className="flex items-center justify-between">
+                                <span className="text-sm font-medium text-muted-foreground">
+                                    Regel {index + 1}
+                                </span>
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => removeItem(item.id)}
+                                    disabled={items.length === 1}
+                                >
+                                    <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                            </div>
+
+                            <div className="grid grid-cols-12 gap-3">
+                                <div className="col-span-12 md:col-span-4 space-y-2">
+                                    <Label>Omschrijving</Label>
+                                    <Input
+                                        value={item.description}
+                                        onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                                        placeholder="Product of dienst"
+                                    />
+                                </div>
+                                <div className="col-span-12 sm:col-span-3 md:col-span-2 space-y-2">
+                                    <Label>Aantal</Label>
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        value={item.quantity}
+                                        onChange={(e) =>
+                                            updateItem(item.id, 'quantity', e.target.value)
+                                        }
+                                    />
+                                </div>
+                                <div className="col-span-12 sm:col-span-3 md:col-span-2 space-y-2">
+                                    <Label>Prijs</Label>
+                                    <Input
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        placeholder="0.00"
+                                        value={item.unitPrice}
+                                        onChange={(e) =>
+                                            updateItem(item.id, 'unitPrice', e.target.value)
+                                        }
+                                    />
+                                </div>
+                                <div className="col-span-12 sm:col-span-3 md:col-span-2 space-y-2">
+                                    <Label>BTW</Label>
+                                    <Select
+                                        value={String(item.vatRate)}
+                                        onValueChange={(v) => updateItem(item.id, 'vatRate', parseFloat(v))}
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {VAT_RATES.map((rate) => (
+                                                <SelectItem key={rate.value} value={String(rate.value)}>
+                                                    {rate.label}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="col-span-12 sm:col-span-3 md:col-span-2 space-y-2">
+                                    <Label>Totaal</Label>
+                                    <div className="flex h-9 items-center rounded-md border bg-muted/50 px-3 font-medium">
+                                        {formatCurrency(item.total)}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+
+            {/* Summary */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Overzicht</CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="ml-auto max-w-xs space-y-3">
+                        <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Subtotaal</span>
+                            <span>{formatCurrency(subtotal)}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">BTW</span>
+                            <span>{formatCurrency(vatAmount)}</span>
+                        </div>
+                        <div className="border-t pt-3">
+                            <div className="flex justify-between text-xl font-bold">
+                                <span>Totaal</span>
+                                <span>{formatCurrency(total)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Actions */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <Button
+                    variant="outline"
+                    onClick={() => handleSubmit(false)}
+                    disabled={isLoading || isSending}
+                >
+                    {isLoading && !isSending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Save className="mr-2 h-4 w-4" />
+                    )}
+                    Opslaan
+                </Button>
+                <Button
+                    onClick={() => handleSubmit(true)}
+                    disabled={isLoading || isSending || !customerEmail}
+                >
+                    {isSending ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Send className="mr-2 h-4 w-4" />
+                    )}
+                    Opslaan & Versturen
+                </Button>
+            </div>
+        </div>
+    );
+}

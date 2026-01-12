@@ -1,0 +1,97 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Customer {
+  id        String       @id @default(cuid())
+  type      CustomerType
+  name      String
+  email     String?
+  address   String?
+  vatNumber String? // alleen voor bedrijven
+
+  payments Payment[]
+  invoices Invoice[]
+
+  createdAt DateTime @default(now())
+}
+
+enum CustomerType {
+  PRIVATE
+  BUSINESS
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  customerId    String
+  amountTotal   Decimal       @db.Decimal(10, 2)
+  paymentMethod PaymentMethod
+  status        PaymentStatus
+  paidAt        DateTime
+
+  invoice Invoice?
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum PaymentMethod {
+  CASH
+  PIN
+  ONLINE
+}
+
+enum PaymentStatus {
+  PAID
+  FAILED
+}
+
+model Invoice {
+  id            String @id @default(cuid())
+  invoiceNumber String @unique
+  customerId    String
+  paymentId     String @unique
+
+  // Vehicle Details
+  licensePlate String?
+  mileage      Int?
+  vehicleModel String?
+
+  subtotal  Decimal @db.Decimal(10, 2)
+  vatAmount Decimal @db.Decimal(10, 2)
+  total     Decimal @db.Decimal(10, 2)
+
+  status   InvoiceStatus
+  issuedAt DateTime
+  paidAt   DateTime
+
+  items InvoiceItem[]
+
+  customer Customer @relation(fields: [customerId], references: [id])
+  payment  Payment  @relation(fields: [paymentId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+enum InvoiceStatus {
+  PAID
+}
+
+model InvoiceItem {
+  id        String @id @default(cuid())
+  invoiceId String
+
+  description String
+  quantity    Int
+  unitPrice   Decimal @db.Decimal(10, 2)
+  vatRate     Decimal @db.Decimal(4, 2)
+  total       Decimal @db.Decimal(10, 2)
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+}
