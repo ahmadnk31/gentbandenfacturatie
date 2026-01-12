@@ -9,6 +9,7 @@ import { Separator } from '@/components/ui/separator';
 import { getInvoice } from '@/lib/actions';
 import { formatCurrency, formatDate, getStatusColor } from '@/lib/invoice-utils';
 import { shopConfig } from '@/lib/shop-config';
+import { generateQRCode, generatePaymentString } from '@/lib/qr';
 import { InvoiceActions } from './invoice-actions';
 
 interface InvoicePageProps {
@@ -81,12 +82,24 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                                 )}
                             </div>
                             <div className="text-right">
-                                <h3 className="text-lg font-semibold">FACTUUR</h3>
-                                <p className="text-2xl font-bold text-primary">#{invoice.invoiceNumber}</p>
-                                <div className="mt-4 space-y-1 text-sm">
+                                <h4 className="mb-2 text-sm font-medium text-muted-foreground uppercase">
+                                    Factuur aan
+                                </h4>
+                                <div>
+                                    <p className="font-semibold">{invoice.customer.name}</p>
+                                    {invoice.customer.address && <p>{invoice.customer.address}</p>}
+                                    {invoice.customer.email && (
+                                        <p className="mt-1 text-sm">{invoice.customer.email}</p>
+                                    )}
+                                    {invoice.customer.vatNumber && (
+                                        <p className="text-sm text-muted-foreground">
+                                            BTW-nr: {invoice.customer.vatNumber}
+                                        </p>
+                                    )}
+                                </div>
+                                <div className="mt-6 text-sm text-muted-foreground">
                                     <p>
-                                        <span className="text-muted-foreground">Datum:</span>{' '}
-                                        {formatDate(invoice.issuedAt)}
+                                        Factuur #{invoice.invoiceNumber} • {formatDate(invoice.issuedAt)}
                                     </p>
                                 </div>
                             </div>
@@ -94,24 +107,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
 
                         <Separator className="my-8" />
 
-                        {/* Bill To */}
-                        <div className="mb-8">
-                            <h4 className="mb-2 text-sm font-medium text-muted-foreground uppercase">
-                                Factuur aan
-                            </h4>
-                            <div>
-                                <p className="font-semibold">{invoice.customer.name}</p>
-                                {invoice.customer.address && <p>{invoice.customer.address}</p>}
-                                {invoice.customer.email && (
-                                    <p className="mt-2 text-sm">{invoice.customer.email}</p>
-                                )}
-                                {invoice.customer.vatNumber && (
-                                    <p className="text-sm text-muted-foreground">
-                                        BTW-nr: {invoice.customer.vatNumber}
-                                    </p>
-                                )}
-                            </div>
-                        </div>
+
 
                         {/* Vehicle Details */}
                         {(invoice.licensePlate || invoice.vehicleModel || invoice.mileage) && (
@@ -144,22 +140,22 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
 
                         {/* Items Table */}
                         <div className="mb-8 overflow-x-auto rounded-lg border">
-                            <table className="w-full">
-                                <thead className="bg-muted/50">
+                            <table className="w-full border-collapse">
+                                <thead className="bg-secondary/50">
                                     <tr>
-                                        <th className="px-2 py-2 sm:px-4 sm:py-3 text-left text-sm font-medium">
+                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-left text-sm font-medium">
                                             Omschrijving
                                         </th>
-                                        <th className="px-2 py-2 sm:px-4 sm:py-3 text-center text-sm font-medium">
+                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-sm font-medium">
                                             Aantal
                                         </th>
-                                        <th className="px-2 py-2 sm:px-4 sm:py-3 text-center text-sm font-medium">
+                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-sm font-medium">
                                             BTW
                                         </th>
-                                        <th className="px-2 py-2 sm:px-4 sm:py-3 text-right text-sm font-medium">
+                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-sm font-medium">
                                             Prijs
                                         </th>
-                                        <th className="px-2 py-2 sm:px-4 sm:py-3 text-right text-sm font-medium">
+                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-sm font-medium">
                                             Totaal
                                         </th>
                                     </tr>
@@ -167,13 +163,13 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                                 <tbody>
                                     {invoice.items.map((item, index) => (
                                         <tr key={item.id} className={index % 2 === 1 ? 'bg-muted/20' : ''}>
-                                            <td className="px-2 py-2 sm:px-4 sm:py-3 text-sm">{item.description}</td>
-                                            <td className="px-2 py-2 sm:px-4 sm:py-3 text-center text-sm">{item.quantity}</td>
-                                            <td className="px-2 py-2 sm:px-4 sm:py-3 text-center text-sm">{item.vatRate}%</td>
-                                            <td className="px-2 py-2 sm:px-4 sm:py-3 text-right text-sm">
+                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-sm">{item.description}</td>
+                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-sm">{item.quantity}</td>
+                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-sm">{item.vatRate}%</td>
+                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-sm">
                                                 {formatCurrency(item.unitPrice)}
                                             </td>
-                                            <td className="px-2 py-2 sm:px-4 sm:py-3 text-right text-sm font-medium">
+                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-sm font-medium">
                                                 {formatCurrency(item.total)}
                                             </td>
                                         </tr>
@@ -207,6 +203,15 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                                 <Separator className="my-8" />
                                 <div className="text-center text-sm text-muted-foreground">
                                     <p>Bank: {shopConfig.bankAccount}</p>
+
+                                    {/* QR Code */}
+                                    <div className="mt-4 flex justify-center">
+                                        <img
+                                            src={await generateQRCode(generatePaymentString(invoice.total, invoice.invoiceNumber, shopConfig.bankAccount, shopConfig.name))}
+                                            alt="Payment QR Code"
+                                            className="h-32 w-32"
+                                        />
+                                    </div>
                                 </div>
                             </>
                         )}

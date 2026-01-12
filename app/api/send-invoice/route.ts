@@ -5,6 +5,7 @@ import { InvoiceEmail } from '@/emails/invoice-email';
 import { InvoicePDF } from '@/components/invoice-pdf';
 import { InvoiceWithRelations } from '@/types/invoice';
 import { shopConfig } from '@/lib/shop-config';
+import { generateQRCode, generatePaymentString } from '@/lib/qr';
 
 export async function POST(request: NextRequest) {
     try {
@@ -17,8 +18,13 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Generate QR Code
+        const qrCodeUrl = await generateQRCode(
+            generatePaymentString(invoice.total, invoice.invoiceNumber, shopConfig.bankAccount, shopConfig.name)
+        );
+
         // Generate PDF
-        const pdfBuffer = await renderToBuffer(InvoicePDF({ invoice }));
+        const pdfBuffer = await renderToBuffer(InvoicePDF({ invoice, qrCodeUrl }));
         const pdfBase64 = Buffer.from(pdfBuffer).toString('base64');
 
         // Send email with PDF attachment

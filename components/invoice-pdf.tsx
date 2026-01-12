@@ -3,6 +3,7 @@ import {
     Page,
     Text,
     View,
+    Image,
     StyleSheet,
 } from '@react-pdf/renderer';
 import { InvoiceWithRelations } from '@/types/invoice';
@@ -10,6 +11,7 @@ import { shopConfig, invoiceConfig } from '@/lib/shop-config';
 
 interface InvoicePDFProps {
     invoice: InvoiceWithRelations;
+    qrCodeUrl?: string; // Optional QR code data URL
 }
 
 const formatCurrency = (amount: number) => {
@@ -195,7 +197,7 @@ const styles = StyleSheet.create({
     },
 });
 
-export function InvoicePDF({ invoice }: InvoicePDFProps) {
+export function InvoicePDF({ invoice, qrCodeUrl }: InvoicePDFProps) {
     return (
         <Document>
             <Page size="A4" style={styles.page}>
@@ -311,6 +313,13 @@ export function InvoicePDF({ invoice }: InvoicePDFProps) {
                 <View style={styles.footer}>
                     {shopConfig.bankAccount && (
                         <Text style={styles.footerText}>Bank: {shopConfig.bankAccount}</Text>
+                    )}
+                    {/* QR Code */}
+                    {/* QR Code */}
+                    {qrCodeUrl && (
+                        <View style={{ marginTop: 10, alignItems: 'center' }}>
+                            <Image src={qrCodeUrl} style={{ width: 100, height: 100 }} />
+                        </View>
                     )}
                     <Text style={styles.thankYou}>Bedankt voor uw aankoop!</Text>
                 </View>

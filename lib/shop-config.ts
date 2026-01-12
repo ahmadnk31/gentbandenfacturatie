@@ -1,7 +1,7 @@
 
 export const shopConfig = {
     name: 'Gent Bandenservice',
-    address: 'Dendermondsesteenweg 428, 9040 Sint-amandsberg',
+    address: 'Dendermondsesteenweg 428',
     city: 'Sint-amandsberg',
     postalCode: '9040',
     country: 'Belgie',
