@@ -218,15 +218,15 @@ const header = {
 
 const shopName = {
     color: '#1a1a1a',
-    fontSize: '24px',
+    fontSize: '20px',
     fontWeight: '700',
     margin: '0 0 10px',
 };
 
 const shopDetails = {
     color: '#666666',
-    fontSize: '12px',
-    lineHeight: '18px',
+    fontSize: '11px',
+    lineHeight: '16px',
     margin: '0',
 };
 
@@ -237,14 +237,14 @@ const divider = {
 
 const invoiceTitle = {
     color: '#1a1a1a',
-    fontSize: '20px',
+    fontSize: '18px',
     fontWeight: '600',
     margin: '0 0 15px',
 };
 
 const label = {
     color: '#666666',
-    fontSize: '12px',
+    fontSize: '11px',
     fontWeight: '500',
     textTransform: 'uppercase' as const,
     margin: '0 0 5px',
@@ -260,7 +260,7 @@ const subLabel = {
 
 const value = {
     color: '#1a1a1a',
-    fontSize: '14px',
+    fontSize: '13px',
     margin: '0',
     lineHeight: '22px',
 };
@@ -281,13 +281,13 @@ const itemRow = {
 
 const itemDescription = {
     color: '#1a1a1a',
-    fontSize: '14px',
+    fontSize: '12px',
     margin: '0',
 };
 
 const itemValue = {
     color: '#666666',
-    fontSize: '14px',
+    fontSize: '12px',
     margin: '0',
 };
 

@@ -29,37 +29,37 @@ const formatDate = (date: Date | string) => {
 const styles = StyleSheet.create({
     page: {
         padding: 40,
-        fontSize: 10,
+        fontSize: 9,
         fontFamily: 'Helvetica',
         backgroundColor: '#ffffff',
     },
     header: {
-        marginBottom: 30,
+        marginBottom: 20,
     },
     shopName: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
-        marginBottom: 5,
+        marginBottom: 4,
     },
     shopDetails: {
-        fontSize: 9,
+        fontSize: 8,
         color: '#666666',
-        lineHeight: 1.5,
+        lineHeight: 1.4,
     },
     invoiceHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        marginBottom: 30,
+        marginBottom: 20,
     },
     invoiceTitle: {
-        fontSize: 24,
+        fontSize: 20,
         fontWeight: 'bold',
         color: '#1a1a1a',
     },
     invoiceNumber: {
-        fontSize: 12,
+        fontSize: 10,
         color: '#666666',
-        marginTop: 5,
+        marginTop: 4,
     },
     invoiceMeta: {
         textAlign: 'right',
@@ -67,44 +67,44 @@ const styles = StyleSheet.create({
     paidBadge: {
         backgroundColor: '#dcfce7',
         color: '#166534',
-        padding: '4 12',
+        padding: '3 10',
         borderRadius: 4,
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: 'bold',
     },
     section: {
-        marginBottom: 20,
+        marginBottom: 16,
     },
     sectionTitle: {
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: 'bold',
         color: '#666666',
-        marginBottom: 8,
+        marginBottom: 6,
         textTransform: 'uppercase',
     },
     customerName: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: 'bold',
-        marginBottom: 3,
+        marginBottom: 2,
     },
     customerDetails: {
-        fontSize: 10,
+        fontSize: 9,
         color: '#333333',
-        lineHeight: 1.5,
+        lineHeight: 1.4,
     },
     table: {
-        marginTop: 10,
+        marginTop: 8,
     },
     tableHeader: {
         flexDirection: 'row',
         backgroundColor: '#f3f4f6',
-        padding: 8,
+        padding: 6,
         borderBottomWidth: 1,
         borderBottomColor: '#e5e7eb',
     },
     tableRow: {
         flexDirection: 'row',
-        padding: 8,
+        padding: 6,
         borderBottomWidth: 1,
         borderBottomColor: '#f3f4f6',
     },
@@ -129,71 +129,71 @@ const styles = StyleSheet.create({
     },
     headerText: {
         fontWeight: 'bold',
-        fontSize: 9,
+        fontSize: 8,
         color: '#374151',
     },
     cellText: {
-        fontSize: 10,
+        fontSize: 9,
         color: '#1f2937',
     },
     totalsSection: {
-        marginTop: 20,
+        marginTop: 16,
         alignItems: 'flex-end',
     },
     totalsBox: {
-        width: 200,
+        width: 180,
     },
     totalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingVertical: 4,
+        paddingVertical: 3,
     },
     totalLabel: {
-        fontSize: 10,
+        fontSize: 9,
         color: '#666666',
     },
     totalValue: {
-        fontSize: 10,
+        fontSize: 9,
         color: '#1a1a1a',
     },
     grandTotalRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        paddingVertical: 8,
+        paddingVertical: 6,
         borderTopWidth: 1,
         borderTopColor: '#e5e7eb',
         marginTop: 4,
     },
     grandTotalLabel: {
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: 'bold',
         color: '#1a1a1a',
     },
     grandTotalValue: {
-        fontSize: 14,
+        fontSize: 12,
         fontWeight: 'bold',
         color: '#1a1a1a',
     },
     footer: {
         position: 'absolute',
-        bottom: 40,
+        bottom: 30,
         left: 40,
         right: 40,
         textAlign: 'center',
-        paddingTop: 20,
+        paddingTop: 15,
         borderTopWidth: 1,
         borderTopColor: '#e5e7eb',
     },
     footerText: {
-        fontSize: 9,
+        fontSize: 8,
         color: '#666666',
-        marginBottom: 3,
+        marginBottom: 2,
     },
     thankYou: {
-        fontSize: 11,
+        fontSize: 10,
         fontWeight: 'bold',
         color: '#1a1a1a',
-        marginTop: 10,
+        marginTop: 8,
     },
 });
 
@@ -314,7 +314,7 @@ export function InvoicePDF({ invoice, qrCodeUrl }: InvoicePDFProps) {
                     {shopConfig.bankAccount && (
                         <Text style={styles.footerText}>Bank: {shopConfig.bankAccount}</Text>
                     )}
-                    {/* QR Code */}
+
                     {/* QR Code */}
                     {qrCodeUrl && (
                         <View style={{ marginTop: 10, alignItems: 'center' }}>

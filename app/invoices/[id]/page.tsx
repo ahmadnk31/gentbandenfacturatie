@@ -60,44 +60,44 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                 <Card className="mx-auto max-w-3xl print:max-w-none print:shadow-none print:border-0" id="invoice-card">
                     <CardContent className="p-4 sm:p-8 print:p-0">
                         {/* Header */}
-                        <div className="flex flex-col justify-between gap-6 sm:flex-row">
+                        <div className="flex flex-col justify-between gap-6 sm:flex-row print:flex-row print:gap-8">
                             <div>
-                                <h2 className="text-2xl font-bold">{shopConfig.name}</h2>
-                                <p className="text-muted-foreground">
+                                <h2 className="text-xl sm:text-2xl font-bold print:text-lg">{shopConfig.name}</h2>
+                                <p className="text-sm sm:text-base text-muted-foreground print:text-xs">
                                     {shopConfig.address}
                                     <br />
                                     {shopConfig.postalCode} {shopConfig.city}
                                     <br />
                                     {shopConfig.country}
                                 </p>
-                                <p className="mt-2 text-sm text-muted-foreground">
+                                <p className="mt-2 text-xs sm:text-sm text-muted-foreground print:text-xs">
                                     {shopConfig.phone}
                                     <br />
                                     {shopConfig.email}
                                 </p>
                                 {shopConfig.taxId && (
-                                    <p className="mt-2 text-sm text-muted-foreground">
+                                    <p className="mt-2 text-xs sm:text-sm text-muted-foreground">
                                         BTW-nr: {shopConfig.taxId}
                                     </p>
                                 )}
                             </div>
                             <div className="text-right">
-                                <h4 className="mb-2 text-sm font-medium text-muted-foreground uppercase">
+                                <h4 className="mb-2 text-xs sm:text-sm font-medium text-muted-foreground uppercase print:text-xs">
                                     Factuur aan
                                 </h4>
-                                <div>
+                                <div className="text-sm sm:text-base print:text-sm">
                                     <p className="font-semibold">{invoice.customer.name}</p>
                                     {invoice.customer.address && <p>{invoice.customer.address}</p>}
                                     {invoice.customer.email && (
-                                        <p className="mt-1 text-sm">{invoice.customer.email}</p>
+                                        <p className="mt-1 text-xs sm:text-sm print:text-xs">{invoice.customer.email}</p>
                                     )}
                                     {invoice.customer.vatNumber && (
-                                        <p className="text-sm text-muted-foreground">
+                                        <p className="text-xs sm:text-sm text-muted-foreground print:text-xs">
                                             BTW-nr: {invoice.customer.vatNumber}
                                         </p>
                                     )}
                                 </div>
-                                <div className="mt-6 text-sm text-muted-foreground">
+                                <div className="mt-4 sm:mt-6 text-xs sm:text-sm text-muted-foreground print:mt-4 print:text-xs">
                                     <p>
                                         Factuur #{invoice.invoiceNumber} • {formatDate(invoice.issuedAt)}
                                     </p>
@@ -139,23 +139,23 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                         )}
 
                         {/* Items Table */}
-                        <div className="mb-8 overflow-x-auto rounded-lg border">
+                        <div className="mb-8 overflow-x-auto rounded-lg border print:mb-4 print:border-gray-200">
                             <table className="w-full border-collapse">
-                                <thead className="bg-secondary/50">
+                                <thead className="bg-secondary/50 print:bg-gray-100">
                                     <tr>
-                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-left text-sm font-medium">
+                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-left text-xs sm:text-sm font-medium print:text-xs print:px-2 print:py-1">
                                             Omschrijving
                                         </th>
-                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-sm font-medium">
+                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm font-medium print:text-xs print:px-2 print:py-1">
                                             Aantal
                                         </th>
-                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-sm font-medium">
+                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm font-medium print:text-xs print:px-2 print:py-1">
                                             BTW
                                         </th>
-                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-sm font-medium">
+                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-xs sm:text-sm font-medium print:text-xs print:px-2 print:py-1">
                                             Prijs
                                         </th>
-                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-sm font-medium">
+                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-xs sm:text-sm font-medium print:text-xs print:px-2 print:py-1">
                                             Totaal
                                         </th>
                                     </tr>
@@ -163,13 +163,13 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                                 <tbody>
                                     {invoice.items.map((item, index) => (
                                         <tr key={item.id} className={index % 2 === 1 ? 'bg-muted/20' : ''}>
-                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-sm">{item.description}</td>
-                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-sm">{item.quantity}</td>
-                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-sm">{item.vatRate}%</td>
-                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-sm">
+                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm print:text-xs print:px-2 print:py-1">{item.description}</td>
+                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm print:text-xs print:px-2 print:py-1">{item.quantity}</td>
+                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm print:text-xs print:px-2 print:py-1">{item.vatRate}%</td>
+                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-xs sm:text-sm print:text-xs print:px-2 print:py-1">
                                                 {formatCurrency(item.unitPrice)}
                                             </td>
-                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-sm font-medium">
+                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-xs sm:text-sm font-medium print:text-xs print:px-2 print:py-1">
                                                 {formatCurrency(item.total)}
                                             </td>
                                         </tr>
@@ -180,17 +180,17 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
 
                         {/* Totals */}
                         <div className="flex justify-end">
-                            <div className="w-64 space-y-2">
-                                <div className="flex justify-between text-sm">
+                            <div className="w-full sm:w-64 space-y-2 print:w-48 print:space-y-1">
+                                <div className="flex justify-between text-xs sm:text-sm print:text-xs">
                                     <span className="text-muted-foreground">Subtotaal</span>
                                     <span>{formatCurrency(invoice.subtotal)}</span>
                                 </div>
-                                <div className="flex justify-between text-sm">
+                                <div className="flex justify-between text-xs sm:text-sm print:text-xs">
                                     <span className="text-muted-foreground">BTW</span>
                                     <span>{formatCurrency(invoice.vatAmount)}</span>
                                 </div>
                                 <Separator />
-                                <div className="flex justify-between text-lg font-bold">
+                                <div className="flex justify-between text-base sm:text-lg font-bold print:text-sm">
                                     <span>Totaal</span>
                                     <span>{formatCurrency(invoice.total)}</span>
                                 </div>
