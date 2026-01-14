@@ -1,19 +1,19 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
-export default function proxy(request: NextRequest) {
+export function proxy(request: NextRequest) {
     const token = request.cookies.get('auth-token');
     const { pathname } = request.nextUrl;
 
-    // Public paths that don't require authentication
+    // Public paths that do not require authentication
     if (
-        pathname.startsWith('/login') ||
-        pathname.startsWith('/api') ||
+        pathname === '/login' ||
         pathname.startsWith('/_next') ||
+        pathname.startsWith('/api/public') ||
         pathname === '/favicon.ico'
     ) {
-        // If logged in and trying to access login page, redirect to home
-        if (pathname === '/login' && token) {
+        // If user is already authenticated and tries to visit login, redirect to dashboard
+        if (token && pathname === '/login') {
             return NextResponse.redirect(new URL('/', request.url));
         }
         return NextResponse.next();
@@ -21,7 +21,8 @@ export default function proxy(request: NextRequest) {
 
     // Protected paths
     if (!token) {
-        return NextResponse.redirect(new URL('/login', request.url));
+        const loginUrl = new URL('/login', request.url);
+        return NextResponse.redirect(loginUrl);
     }
 
     return NextResponse.next();
