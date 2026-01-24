@@ -17,6 +17,20 @@ interface InvoiceEmailProps {
     invoice: InvoiceWithRelations;
 }
 
+const styles = `
+    @media only screen and (max-width: 600px) {
+        .responsive-col {
+            display: block !important;
+            width: 100% !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+        .container {
+            padding: 20px !important;
+        }
+    }
+`;
+
 export function InvoiceEmail({ invoice }: InvoiceEmailProps) {
     const formatCurrency = (amount: number) => {
         return new Intl.NumberFormat('nl-NL', {
@@ -32,9 +46,11 @@ export function InvoiceEmail({ invoice }: InvoiceEmailProps) {
 
     return (
         <Html>
-            <Head />
+            <Head>
+                <style dangerouslySetInnerHTML={{ __html: styles }} />
+            </Head>
             <Body style={main}>
-                <Container style={container}>
+                <Container style={container} className="container">
                     {/* Header */}
                     <Section style={header}>
                         <Heading style={shopName}>{shopConfig.name}</Heading>
@@ -99,19 +115,19 @@ export function InvoiceEmail({ invoice }: InvoiceEmailProps) {
                                 <Text style={label}>Voertuig</Text>
                                 <Row>
                                     {invoice.licensePlate && (
-                                        <Column>
+                                        <Column className="responsive-col">
                                             <Text style={subLabel}>Kenteken</Text>
                                             <Text style={value}>{invoice.licensePlate}</Text>
                                         </Column>
                                     )}
                                     {invoice.vehicleModel && (
-                                        <Column>
+                                        <Column className="responsive-col">
                                             <Text style={subLabel}>Merk & Model</Text>
                                             <Text style={value}>{invoice.vehicleModel}</Text>
                                         </Column>
                                     )}
                                     {invoice.mileage && (
-                                        <Column>
+                                        <Column className="responsive-col">
                                             <Text style={subLabel}>Kilometerstand</Text>
                                             <Text style={value}>{invoice.mileage.toLocaleString()} km</Text>
                                         </Column>
@@ -129,16 +145,16 @@ export function InvoiceEmail({ invoice }: InvoiceEmailProps) {
                         <Text style={label}>Factuurregels</Text>
                         {invoice.items.map((item) => (
                             <Row key={item.id} style={itemRow}>
-                                <Column style={{ width: '50%' }}>
+                                <Column style={{ width: '50%' }} className="responsive-col">
                                     <Text style={itemDescription}>{item.description}</Text>
                                 </Column>
-                                <Column style={{ width: '15%', textAlign: 'center' }}>
+                                <Column style={{ width: '15%', textAlign: 'center' }} className="responsive-col">
                                     <Text style={itemValue}>{item.quantity}x</Text>
                                 </Column>
-                                <Column style={{ width: '15%', textAlign: 'center' }}>
+                                <Column style={{ width: '15%', textAlign: 'center' }} className="responsive-col">
                                     <Text style={itemValue}>{item.vatRate}%</Text>
                                 </Column>
-                                <Column style={{ width: '20%', textAlign: 'right' }}>
+                                <Column style={{ width: '20%', textAlign: 'right' }} className="responsive-col">
                                     <Text style={itemValue}>{formatCurrency(item.total)}</Text>
                                 </Column>
                             </Row>
@@ -150,8 +166,8 @@ export function InvoiceEmail({ invoice }: InvoiceEmailProps) {
                     {/* Totals */}
                     <Section style={totalsSection}>
                         <Row>
-                            <Column style={{ width: '60%' }}></Column>
-                            <Column style={{ width: '40%' }}>
+                            <Column style={{ width: '60%' }} className="responsive-col"></Column>
+                            <Column style={{ width: '40%' }} className="responsive-col">
                                 <Row>
                                     <Column>
                                         <Text style={totalLabel}>Subtotaal</Text>

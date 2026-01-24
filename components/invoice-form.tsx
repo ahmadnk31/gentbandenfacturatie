@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Plus, Trash2, Send, Save, Loader2, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -30,8 +30,8 @@ import {
     formatCurrency,
     VAT_RATES,
 } from '@/lib/invoice-utils';
-import { createInvoice } from '@/lib/actions';
-import { useEffect } from 'react';
+import { createInvoice, getCustomerByEmail } from '@/lib/actions';
+import { toast } from 'sonner';
 
 const STORAGE_KEY = 'invoice-form-draft';
 
@@ -185,14 +185,53 @@ export function InvoiceForm() {
         ]);
     };
 
+    // Load from local storage... (existing code)
+
+    // Debounced email lookup
+    useEffect(() => {
+        const lookupCustomer = async () => {
+            if (!customerEmail || !customerEmail.includes('@') || customerEmail.length < 5) return;
+
+            // Don't lookup if we just loaded from storage or if it's already the current customer
+            // Need a way to debounce
+            const timer = setTimeout(async () => {
+                try {
+                    // Start transition to avoid blocking UI
+                    const customer = await getCustomerByEmail(customerEmail);
+
+                    if (customer) {
+                        toast.info('Klantgegevens gevonden en ingevuld');
+
+                        // Only fill empty fields or overwrite if it looks like a new entry
+                        setCustomerType(customer.type);
+                        setCustomerName(customer.name);
+                        if (customer.address) setCustomerAddress(customer.address);
+                        if (customer.vatNumber) setCustomerVatNumber(customer.vatNumber);
+
+                        // Fill vehicle info if available
+                        if (customer.licensePlate) setLicensePlate(customer.licensePlate);
+                        if (customer.mileage) setMileage(String(customer.mileage));
+                        if (customer.vehicleModel) setVehicleModel(customer.vehicleModel);
+                    }
+                } catch (error) {
+                    console.error('Error looking up customer:', error);
+                }
+            }, 800);
+
+            return () => clearTimeout(timer);
+        };
+
+        lookupCustomer();
+    }, [customerEmail]);
+
     const handleSubmit = async (sendEmail: boolean) => {
         if (!customerName.trim()) {
-            alert('Vul een klantnaam in');
+            toast.error('Vul een klantnaam in');
             return;
         }
 
         if (items.every((item) => !item.description.trim())) {
-            alert('Voeg minimaal één item toe');
+            toast.error('Voeg minimaal één item toe');
             return;
         }
 
@@ -225,21 +264,22 @@ export function InvoiceForm() {
                 });
 
                 if (response.ok) {
-                    alert(`Factuur verzonden naar ${customerEmail}`);
+                    toast.success(`Factuur succesvol opgeslagen en verzonden naar ${customerEmail}`);
                 } else {
                     const result = await response.json();
-                    alert(`Email fout: ${result.error}`);
+                    toast.warning(`Factuur opgeslagen, maar kon niet worden verzonden. Fout: ${result.error}`);
                 }
+            } else {
+                toast.success('Factuur succesvol opgeslagen (niet verzonden)');
             }
 
             router.push(`/invoices/${invoice.id}`);
-            router.refresh();
 
             // Clear draft on success
             localStorage.removeItem(STORAGE_KEY);
         } catch (error) {
             console.error('Error creating invoice:', error);
-            alert('Er is een fout opgetreden');
+            toast.error('Er is een fout opgetreden bij het opslaan');
         } finally {
             setIsLoading(false);
             setIsSending(false);
@@ -282,7 +322,7 @@ export function InvoiceForm() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="customerEmail">E-mail</Label>
+                            <Label htmlFor="customerEmail">E-mail (Optioneel)</Label>
                             <Input
                                 id="customerEmail"
                                 type="email"
@@ -293,7 +333,7 @@ export function InvoiceForm() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="customerAddress">Adres</Label>
+                            <Label htmlFor="customerAddress">Adres (Optioneel)</Label>
                             <Input
                                 id="customerAddress"
                                 value={customerAddress}
@@ -513,6 +553,7 @@ export function InvoiceForm() {
             {/* Actions */}
             <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
                 <Button
+                    type="button"
                     variant="outline"
                     onClick={() => handleSubmit(false)}
                     disabled={isLoading || isSending}
@@ -525,6 +566,7 @@ export function InvoiceForm() {
                     Opslaan
                 </Button>
                 <Button
+                    type="button"
                     onClick={() => handleSubmit(true)}
                     disabled={isLoading || isSending || !customerEmail}
                 >

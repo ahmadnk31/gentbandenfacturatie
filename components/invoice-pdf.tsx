@@ -201,21 +201,39 @@ export function InvoicePDF({ invoice, qrCodeUrl }: InvoicePDFProps) {
     return (
         <Document>
             <Page size="A4" style={styles.page}>
-                {/* Header with Shop Info */}
-                <View style={styles.header}>
-                    <Text style={styles.shopName}>{shopConfig.name}</Text>
-                    <Text style={styles.shopDetails}>
-                        {shopConfig.address}, {shopConfig.postalCode} {shopConfig.city}
-                    </Text>
-                    <Text style={styles.shopDetails}>
-                        {shopConfig.phone} | {shopConfig.email}
-                    </Text>
-                    {shopConfig.taxId && (
-                        <Text style={styles.shopDetails}>BTW-nr: {shopConfig.taxId}</Text>
-                    )}
+                {/* Header Row: Shop Info & Customer Info */}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 }}>
+                    {/* Left: Shop Info */}
+                    <View style={{ width: '50%' }}>
+                        <Text style={styles.shopName}>{shopConfig.name}</Text>
+                        <Text style={styles.shopDetails}>
+                            {shopConfig.address}, {shopConfig.postalCode} {shopConfig.city}
+                        </Text>
+                        <Text style={styles.shopDetails}>
+                            {shopConfig.phone} | {shopConfig.email}
+                        </Text>
+                        {shopConfig.taxId && (
+                            <Text style={styles.shopDetails}>BTW-nr: {shopConfig.taxId}</Text>
+                        )}
+                    </View>
+
+                    {/* Right: Customer Info */}
+                    <View style={{ width: '45%' }}>
+                        <Text style={styles.sectionTitle}>Factuur aan</Text>
+                        <Text style={styles.customerName}>{invoice.customer.name}</Text>
+                        {invoice.customer.address && (
+                            <Text style={styles.customerDetails}>{invoice.customer.address}</Text>
+                        )}
+                        {invoice.customer.email && (
+                            <Text style={styles.customerDetails}>{invoice.customer.email}</Text>
+                        )}
+                        {invoice.customer.vatNumber && (
+                            <Text style={styles.customerDetails}>BTW-nr: {invoice.customer.vatNumber}</Text>
+                        )}
+                    </View>
                 </View>
 
-                {/* Invoice Header */}
+                {/* Invoice Header (Factuur #, Date) */}
                 <View style={styles.invoiceHeader}>
                     <View>
                         <Text style={styles.invoiceTitle}>FACTUUR</Text>
@@ -227,21 +245,6 @@ export function InvoicePDF({ invoice, qrCodeUrl }: InvoicePDFProps) {
                             <Text style={styles.paidBadge}>BETAALD</Text>
                         </View>
                     </View>
-                </View>
-
-                {/* Customer Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>Factuur aan</Text>
-                    <Text style={styles.customerName}>{invoice.customer.name}</Text>
-                    {invoice.customer.address && (
-                        <Text style={styles.customerDetails}>{invoice.customer.address}</Text>
-                    )}
-                    {invoice.customer.email && (
-                        <Text style={styles.customerDetails}>{invoice.customer.email}</Text>
-                    )}
-                    {invoice.customer.vatNumber && (
-                        <Text style={styles.customerDetails}>BTW-nr: {invoice.customer.vatNumber}</Text>
-                    )}
                 </View>
 
                 {/* Vehicle Section */}

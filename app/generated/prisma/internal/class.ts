@@ -17,8 +17,8 @@ import type * as Prisma from "./prismaNamespace"
 
 const config: runtime.GetPrismaClientConfig = {
   "previewFeatures": [],
-  "clientVersion": "7.2.0",
-  "engineVersion": "0c8ef2ce45c83248ab3df073180d5eda9e8be7a3",
+  "clientVersion": "7.3.0",
+  "engineVersion": "9d6ad21cbbceab97458517b147a6a09ff43aa735",
   "activeProvider": "postgresql",
   "inlineSchema": "generator client {\n  provider = \"prisma-client\"\n  output   = \"../app/generated/prisma\"\n}\n\ndatasource db {\n  provider = \"postgresql\"\n}\n\nmodel Customer {\n  id        String       @id @default(cuid())\n  type      CustomerType\n  name      String\n  email     String?\n  address   String?\n  vatNumber String? // alleen voor bedrijven\n\n  payments Payment[]\n  invoices Invoice[]\n\n  createdAt DateTime @default(now())\n}\n\nenum CustomerType {\n  PRIVATE\n  BUSINESS\n}\n\nmodel Payment {\n  id            String        @id @default(cuid())\n  customerId    String\n  amountTotal   Decimal       @db.Decimal(10, 2)\n  paymentMethod PaymentMethod\n  status        PaymentStatus\n  paidAt        DateTime\n\n  invoice Invoice?\n\n  customer Customer @relation(fields: [customerId], references: [id])\n\n  createdAt DateTime @default(now())\n}\n\nenum PaymentMethod {\n  CASH\n  PIN\n  ONLINE\n}\n\nenum PaymentStatus {\n  PAID\n  FAILED\n}\n\nmodel Invoice {\n  id            String @id @default(cuid())\n  invoiceNumber String @unique\n  customerId    String\n  paymentId     String @unique\n\n  // Vehicle Details\n  licensePlate String?\n  mileage      Int?\n  vehicleModel String?\n\n  subtotal  Decimal @db.Decimal(10, 2)\n  vatAmount Decimal @db.Decimal(10, 2)\n  total     Decimal @db.Decimal(10, 2)\n\n  status   InvoiceStatus\n  issuedAt DateTime\n  paidAt   DateTime\n\n  items InvoiceItem[]\n\n  customer Customer @relation(fields: [customerId], references: [id])\n  payment  Payment  @relation(fields: [paymentId], references: [id])\n\n  createdAt DateTime @default(now())\n}\n\nenum InvoiceStatus {\n  PAID\n}\n\nmodel InvoiceItem {\n  id        String @id @default(cuid())\n  invoiceId String\n\n  description String\n  quantity    Int\n  unitPrice   Decimal @db.Decimal(10, 2)\n  vatRate     Decimal @db.Decimal(4, 2)\n  total       Decimal @db.Decimal(10, 2)\n\n  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)\n}\n",
   "runtimeDataModel": {
@@ -37,12 +37,14 @@ async function decodeBase64AsWasm(wasmBase64: string): Promise<WebAssembly.Modul
 }
 
 config.compilerWasm = {
-  getRuntime: async () => await import("@prisma/client/runtime/query_compiler_bg.postgresql.mjs"),
+  getRuntime: async () => await import("@prisma/client/runtime/query_compiler_fast_bg.postgresql.mjs"),
 
   getQueryCompilerWasmModule: async () => {
-    const { wasm } = await import("@prisma/client/runtime/query_compiler_bg.postgresql.wasm-base64.mjs")
+    const { wasm } = await import("@prisma/client/runtime/query_compiler_fast_bg.postgresql.wasm-base64.mjs")
     return await decodeBase64AsWasm(wasm)
-  }
+  },
+
+  importName: "./query_compiler_fast_bg.js"
 }
 
 
