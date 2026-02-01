@@ -4,6 +4,7 @@
 export interface InvoiceItemInput {
     id: string;
     description: string;
+    size?: string;
     quantity: number | string;
     unitPrice: number | string;
     vatRate: number;
@@ -21,6 +22,7 @@ export interface CreateInvoiceInput {
 
     // Payment info
     paymentMethod: 'CASH' | 'PIN' | 'ONLINE';
+    status: 'PAID' | 'UNPAID';
 
     // Invoice items
     items: InvoiceItemInput[];
@@ -46,7 +48,7 @@ export interface InvoiceWithRelations {
     subtotal: number;
     vatAmount: number;
     total: number;
-    status: 'PAID';
+    status: 'PAID' | 'UNPAID';
     issuedAt: Date;
     paidAt: Date;
     createdAt: Date;
@@ -62,6 +64,7 @@ export interface InvoiceWithRelations {
     items: {
         id: string;
         description: string;
+        size: string | null;
         quantity: number;
         unitPrice: number;
         vatRate: number;

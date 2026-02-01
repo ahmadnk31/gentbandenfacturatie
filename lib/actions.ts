@@ -1,10 +1,12 @@
 'use server';
 
-
-import { CreateInvoiceInput, InvoiceWithRelations } from '@/types/invoice';
-import { Decimal } from '@prisma/client/runtime/index-browser';
 import prisma from './prisma';
+import { CreateInvoiceInput, InvoiceWithRelations } from '@/types/invoice';
 import { revalidatePath } from 'next/cache';
+import { transformInvoice } from './invoice-utils';
+import { Prisma } from '@/app/generated/prisma/client';
+
+const Decimal = Prisma.Decimal;
 
 // Generate unique invoice number: INV-YYYYMM-XXXX
 async function generateInvoiceNumber(): Promise<string> {
@@ -104,12 +106,13 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceW
                     subtotal: new Decimal(subtotal),
                     vatAmount: new Decimal(vatAmount),
                     total: new Decimal(total),
-                    status: 'PAID',
+                    status: input.status,
                     issuedAt: now,
                     paidAt: now,
                     items: {
                         create: input.items.map((item) => ({
                             description: item.description,
+                            size: item.size || null,
                             quantity: Number(item.quantity) || 0,
                             unitPrice: new Decimal(item.unitPrice),
                             vatRate: new Decimal(item.vatRate),
@@ -204,11 +207,13 @@ export async function updateInvoice(id: string, input: CreateInvoiceInput): Prom
             subtotal: new Decimal(subtotal),
             vatAmount: new Decimal(vatAmount),
             total: new Decimal(total),
+            status: input.status,
 
             items: {
                 deleteMany: {},
                 create: input.items.map((item) => ({
                     description: item.description,
+                    size: item.size || null,
                     quantity: Number(item.quantity) || 0,
                     unitPrice: new Decimal(item.unitPrice),
                     vatRate: new Decimal(item.vatRate),
@@ -344,42 +349,4 @@ export async function deleteInvoice(id: string): Promise<boolean> {
     }
 }
 
-// Transform Prisma result to plain object with numbers
-function transformInvoice(invoice: any): InvoiceWithRelations {
-    return {
-        id: invoice.id,
-        invoiceNumber: invoice.invoiceNumber,
-        customerId: invoice.customerId,
-        paymentId: invoice.paymentId,
-
-        // Vehicle Details
-        licensePlate: invoice.licensePlate,
-        mileage: invoice.mileage,
-        vehicleModel: invoice.vehicleModel,
-
-        subtotal: Number(invoice.subtotal),
-        vatAmount: Number(invoice.vatAmount),
-        total: Number(invoice.total),
-        status: invoice.status,
-        issuedAt: invoice.issuedAt,
-        paidAt: invoice.paidAt,
-        createdAt: invoice.createdAt,
-        customer: {
-            id: invoice.customer.id,
-            type: invoice.customer.type,
-            name: invoice.customer.name,
-            email: invoice.customer.email,
-            address: invoice.customer.address,
-            vatNumber: invoice.customer.vatNumber,
-        },
-        paymentMethod: invoice.payment.paymentMethod,
-        items: invoice.items.map((item: any) => ({
-            id: item.id,
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: Number(item.unitPrice),
-            vatRate: Number(item.vatRate),
-            total: Number(item.total),
-        })),
-    };
-}
+// Transform function moved to invoice-utils.ts

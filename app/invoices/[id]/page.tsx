@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { getInvoice } from '@/lib/actions';
-import { formatCurrency, formatDate, getStatusColor } from '@/lib/invoice-utils';
+import { formatCurrency, formatDate, getStatusColor, getStatusLabel } from '@/lib/invoice-utils';
 import { shopConfig } from '@/lib/shop-config';
 import { generateQRCode, generatePaymentString } from '@/lib/qr';
 import { InvoiceActions } from './invoice-actions';
@@ -45,7 +45,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                                     Factuur #{invoice.invoiceNumber}
                                 </h1>
                                 <Badge className={getStatusColor(invoice.status)} variant="secondary">
-                                    Betaald
+                                    {getStatusLabel(invoice.status)}
                                 </Badge>
                             </div>
                             <p className="text-muted-foreground">
@@ -147,6 +147,9 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                                             Omschrijving
                                         </th>
                                         <th className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm font-medium print:text-xs print:px-2 print:py-1">
+                                            Maat
+                                        </th>
+                                        <th className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm font-medium print:text-xs print:px-2 print:py-1">
                                             Aantal
                                         </th>
                                         <th className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm font-medium print:text-xs print:px-2 print:py-1">
@@ -164,6 +167,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                                     {invoice.items.map((item, index) => (
                                         <tr key={item.id} className={index % 2 === 1 ? 'bg-muted/20' : ''}>
                                             <td className="border px-2 py-2 sm:px-4 sm:py-3 text-xs sm:text-sm print:text-xs print:px-2 print:py-1">{item.description}</td>
+                                            <td className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm print:text-xs print:px-2 print:py-1">{item.size || '-'}</td>
                                             <td className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm print:text-xs print:px-2 print:py-1">{item.quantity}</td>
                                             <td className="border px-2 py-2 sm:px-4 sm:py-3 text-center text-xs sm:text-sm print:text-xs print:px-2 print:py-1">{item.vatRate}%</td>
                                             <td className="border px-2 py-2 sm:px-4 sm:py-3 text-right text-xs sm:text-sm print:text-xs print:px-2 print:py-1">

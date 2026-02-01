@@ -6,13 +6,25 @@ import { Header } from '@/components/header';
 import { getAllInvoices } from '@/lib/actions';
 import { formatCurrency } from '@/lib/invoice-utils';
 import { InvoiceList } from '@/components/invoice-list';
+import { ReportDialog } from '@/components/report-dialog';
+import { TireRecommendations } from '@/components/tire-recommendations';
+import { getTopTireSizes } from '@/lib/report-actions';
+
+export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
-  const invoices = await getAllInvoices();
+  const [invoices, tireRecommendations] = await Promise.all([
+    getAllInvoices(),
+    getTopTireSizes(5)
+  ]);
 
   // Calculate stats
   const totalInvoices = invoices.length;
-  const totalRevenue = invoices.reduce((sum, inv) => sum + inv.total, 0);
+  const paidInvoices = invoices.filter(inv => inv.status === 'PAID');
+  const unpaidInvoices = invoices.filter(inv => inv.status === 'UNPAID');
+
+  const totalRevenue = paidInvoices.reduce((sum, inv) => sum + inv.total, 0);
+  const outstandingAmount = unpaidInvoices.reduce((sum, inv) => sum + inv.total, 0);
 
   const recentInvoices = invoices.slice(0, 5);
 
@@ -28,16 +40,19 @@ export default async function HomePage() {
               Beheer facturen en betalingen
             </p>
           </div>
-          <Button asChild size="lg">
-            <Link href="/invoices/new">
-              <Plus className="mr-2 h-5 w-5" />
-              Nieuwe Factuur
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <ReportDialog />
+            <Button asChild size="lg">
+              <Link href="/invoices/new">
+                <Plus className="mr-2 h-5 w-5" />
+                Nieuwe Factuur
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Stats Cards */}
-        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -59,20 +74,30 @@ export default async function HomePage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+              <p className="text-xs text-muted-foreground">
+                Van {paidInvoices.length} facturen
+              </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-orange-200 bg-orange-50/30 dark:bg-orange-900/10">
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Status
+              <CardTitle className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                Openstaand
               </CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-500" />
+              <DollarSign className="h-4 w-4 text-orange-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">Alle betaald</div>
+              <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+                {formatCurrency(outstandingAmount)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {unpaidInvoices.length} facturen
+              </p>
             </CardContent>
           </Card>
+
+          <TireRecommendations recommendations={tireRecommendations} />
         </div>
 
         {/* Recent Invoices */}

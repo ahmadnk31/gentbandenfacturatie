@@ -123,6 +123,7 @@ export const InvoiceItemScalarFieldEnum = {
   id: 'id',
   invoiceId: 'invoiceId',
   description: 'description',
+  size: 'size',
   quantity: 'quantity',
   unitPrice: 'unitPrice',
   vatRate: 'vatRate',

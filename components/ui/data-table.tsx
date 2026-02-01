@@ -9,6 +9,9 @@ import {
     getFilteredRowModel,
     useReactTable,
     FilterFn,
+    getPaginationRowModel,
+    getSortedRowModel,
+    SortingState,
 } from "@tanstack/react-table"
 import { DateRange } from "react-day-picker"
 
@@ -27,7 +30,6 @@ import { Search } from "lucide-react"
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
     data: TData[]
-    searchKey?: string
     searchPlaceholder?: string
     dateKey?: string
     showDateFilter?: boolean
@@ -63,12 +65,13 @@ const dateRangeFilter = (row: any, columnId: string, filterValue: any) => {
 export function DataTable<TData, TValue>({
     columns,
     data,
-    searchKey = "invoiceNumber",
     searchPlaceholder = "Zoeken...",
     dateKey = "issuedAt",
     showDateFilter = true,
 }: DataTableProps<TData, TValue>) {
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+    const [globalFilter, setGlobalFilter] = useState('')
+    const [sorting, setSorting] = useState<SortingState>([])
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined)
 
     // Memoize columns with custom filter function for date column
@@ -89,9 +92,15 @@ export function DataTable<TData, TValue>({
         columns: columnsWithFilters as ColumnDef<TData, TValue>[],
         getCoreRowModel: getCoreRowModel(),
         onColumnFiltersChange: setColumnFilters,
+        onGlobalFilterChange: setGlobalFilter,
         getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        getSortedRowModel: getSortedRowModel(),
+        onSortingChange: setSorting,
         state: {
             columnFilters,
+            globalFilter,
+            sorting,
         },
     })
 
@@ -109,9 +118,9 @@ export function DataTable<TData, TValue>({
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         placeholder={searchPlaceholder}
-                        value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
+                        value={globalFilter ?? ""}
                         onChange={(event) =>
-                            table.getColumn(searchKey)?.setFilterValue(event.target.value)
+                            setGlobalFilter(event.target.value)
                         }
                         className="pl-9 w-full"
                     />

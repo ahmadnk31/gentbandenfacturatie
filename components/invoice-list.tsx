@@ -1,14 +1,15 @@
 'use client';
 
 import Link from 'next/link';
-import { formatCurrency, formatDate, getStatusColor, getPaymentMethodLabel } from '@/lib/invoice-utils';
+import { formatCurrency, formatDate, getStatusColor, getPaymentMethodLabel, getStatusLabel } from '@/lib/invoice-utils';
 import { InvoiceWithRelations } from '@/types/invoice';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Eye, Send, Trash2, MoreHorizontal, Download, Pencil } from 'lucide-react';
-import { deleteInvoice } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
-import { useState, useOptimistic, useTransition, useMemo } from 'react';
+import { useState, useMemo } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { getAllInvoices, deleteInvoice } from '@/lib/actions';
 import { ColumnDef } from '@tanstack/react-table';
 import { DataTable } from '@/components/ui/data-table';
 import {
@@ -27,26 +28,40 @@ interface InvoiceListProps {
     invoices: InvoiceWithRelations[];
 }
 
-export function InvoiceList({ invoices }: InvoiceListProps) {
+export function InvoiceList({ invoices: initialInvoices }: InvoiceListProps) {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const [loading, setLoading] = useState<string | null>(null);
-    const [isPending, startTransition] = useTransition();
 
-    const [optimisticInvoices, removeOptimisticInvoice] = useOptimistic(
-        invoices,
-        (state, id: string) => state.filter((invoice) => invoice.id !== id)
-    );
+    const { data: invoices = initialInvoices, isLoading: isQueryLoading } = useQuery({
+        queryKey: ['invoices'],
+        queryFn: () => getAllInvoices(),
+        initialData: initialInvoices,
+    });
+
+    const deleteMutation = useMutation({
+        mutationFn: (id: string) => deleteInvoice(id),
+        onMutate: async (id) => {
+            await queryClient.cancelQueries({ queryKey: ['invoices'] });
+            const previousInvoices = queryClient.getQueryData(['invoices']);
+            queryClient.setQueryData(['invoices'], (old: any) =>
+                old?.filter((invoice: any) => invoice.id !== id)
+            );
+            return { previousInvoices };
+        },
+        onError: (err, id, context) => {
+            queryClient.setQueryData(['invoices'], context?.previousInvoices);
+            alert('Kon factuur niet verwijderen');
+        },
+        onSettled: () => {
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
+        },
+    });
+
+    const optimisticInvoices = useMemo(() => invoices, [invoices]);
 
     const handleDelete = async (id: string) => {
-        startTransition(async () => {
-            removeOptimisticInvoice(id);
-            try {
-                await deleteInvoice(id);
-            } catch (error) {
-                console.error('Error deleting invoice:', error);
-                alert('Kon factuur niet verwijderen');
-            }
-        });
+        deleteMutation.mutate(id);
     };
 
     const handleDownload = async (invoice: InvoiceWithRelations) => {
@@ -136,11 +151,25 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
             {
                 id: 'description',
                 header: 'Omschrijving',
+                accessorFn: (row: InvoiceWithRelations) => row.items.map((item) => item.description).join(', '),
                 cell: ({ row }) => {
                     const descriptions = row.original.items.map((item) => item.description).join(', ');
                     return (
                         <div className="max-w-[300px] truncate text-sm text-muted-foreground" title={descriptions}>
                             {descriptions}
+                        </div>
+                    );
+                },
+            },
+            {
+                id: 'maat',
+                header: 'Maat',
+                accessorFn: (row: InvoiceWithRelations) => row.items.map((item) => item.size).filter(Boolean).join(', '),
+                cell: ({ row }) => {
+                    const sizes = row.original.items.map((item) => item.size).filter(Boolean).join(', ');
+                    return (
+                        <div className="text-sm font-medium">
+                            {sizes || '-'}
                         </div>
                     );
                 },
@@ -166,7 +195,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                 header: 'Status',
                 cell: ({ row }) => (
                     <Badge className={getStatusColor(row.original.status)} variant="secondary">
-                        Betaald
+                        {getStatusLabel(row.original.status)}
                     </Badge>
                 ),
             },
@@ -268,8 +297,7 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
         <DataTable
             columns={columns}
             data={optimisticInvoices}
-            searchKey="invoiceNumber"
-            searchPlaceholder="Zoeken op factuurnummer..."
+            searchPlaceholder="Zoeken op nummer, klant, maat..."
         />
     );
 }

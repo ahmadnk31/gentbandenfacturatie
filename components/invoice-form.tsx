@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Trash2, Send, Save, Loader2, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -42,6 +43,7 @@ interface InvoiceFormProps {
 
 export function InvoiceForm({ initialData }: InvoiceFormProps) {
     const router = useRouter();
+    const queryClient = useQueryClient();
     const isEdit = !!initialData;
     const [isLoading, setIsLoading] = useState(false);
     const [isSending, setIsSending] = useState(false);
@@ -60,18 +62,20 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
 
     // Payment state
     const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'PIN' | 'ONLINE'>(initialData?.paymentMethod || 'PIN');
+    const [status, setStatus] = useState<'PAID' | 'UNPAID'>(initialData?.status || 'PAID');
 
     // Items state
     const [items, setItems] = useState<InvoiceItemInput[]>(
         initialData?.items.map(item => ({
             id: item.id,
             description: item.description,
+            size: item.size || '',
             quantity: item.quantity,
             unitPrice: item.unitPrice,
             vatRate: item.vatRate,
             total: item.total
         })) || [
-            { id: generateItemId(), description: '', quantity: 1, unitPrice: '', vatRate: 21, total: 0 },
+            { id: generateItemId(), description: '', size: '', quantity: 1, unitPrice: '', vatRate: 21, total: 0 },
         ]
     );
 
@@ -113,6 +117,7 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
             mileage,
             vehicleModel,
             paymentMethod,
+            status,
             items,
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
@@ -162,7 +167,7 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
     const addItem = () => {
         setItems((prev) => [
             ...prev,
-            { id: generateItemId(), description: '', quantity: 1, unitPrice: '', vatRate: 21, total: 0 },
+            { id: generateItemId(), description: '', size: '', quantity: 1, unitPrice: '', vatRate: 21, total: 0 },
         ]);
     };
 
@@ -178,6 +183,7 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
             {
                 id: generateItemId(),
                 description: '205/55 R16 91V Michelin Primacy 4',
+                size: '205/55 R16',
                 quantity: 2,
                 unitPrice: 120,
                 vatRate: 21,
@@ -263,7 +269,8 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                 customerAddress: customerAddress || undefined,
                 customerVatNumber: customerType === 'BUSINESS' ? customerVatNumber : undefined,
                 paymentMethod,
-                items: items.filter((item) => item.description.trim()),
+                status,
+                items: items.filter((item) => item.description.trim() || (item.size && item.size.trim())),
 
                 // Vehicle details
                 licensePlate: licensePlate || undefined,
@@ -294,6 +301,9 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
             } else {
                 toast.success('Factuur succesvol opgeslagen (niet verzonden)');
             }
+
+            // Invalidate invoices query to ensure list is refreshed
+            queryClient.invalidateQueries({ queryKey: ['invoices'] });
 
             router.push(`/invoices/${invoice.id}`);
 
@@ -402,6 +412,22 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                             </Select>
                         </div>
 
+                        <div className="space-y-2">
+                            <Label>Status</Label>
+                            <Select
+                                value={status}
+                                onValueChange={(v) => setStatus(v as 'PAID' | 'UNPAID')}
+                            >
+                                <SelectTrigger>
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="PAID">Betaald</SelectItem>
+                                    <SelectItem value="UNPAID">Niet Betaald</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
                         <div className="mt-8 rounded-lg bg-muted/50 p-4">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Receipt className="h-4 w-4" />
@@ -487,7 +513,7 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                             </div>
 
                             <div className="grid grid-cols-12 gap-3">
-                                <div className="col-span-12 md:col-span-4 space-y-2">
+                                <div className="col-span-12 md:col-span-3 space-y-2">
                                     <Label>Omschrijving</Label>
                                     <Input
                                         value={item.description}
@@ -495,7 +521,15 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                                         placeholder="Product of dienst"
                                     />
                                 </div>
-                                <div className="col-span-12 sm:col-span-3 md:col-span-2 space-y-2">
+                                <div className="col-span-12 md:col-span-2 space-y-2">
+                                    <Label>Maat</Label>
+                                    <Input
+                                        value={item.size}
+                                        onChange={(e) => updateItem(item.id, 'size', e.target.value)}
+                                        placeholder="bijv. 205/55 R16"
+                                    />
+                                </div>
+                                <div className="col-span-4 md:col-span-1 space-y-2">
                                     <Label>Aantal</Label>
                                     <Input
                                         type="number"
@@ -506,7 +540,7 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                                         }
                                     />
                                 </div>
-                                <div className="col-span-12 sm:col-span-3 md:col-span-2 space-y-2">
+                                <div className="col-span-8 md:col-span-2 space-y-2">
                                     <Label>Prijs</Label>
                                     <Input
                                         type="number"
@@ -519,7 +553,7 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                                         }
                                     />
                                 </div>
-                                <div className="col-span-12 sm:col-span-3 md:col-span-2 space-y-2">
+                                <div className="col-span-6 md:col-span-2 space-y-2">
                                     <Label>BTW</Label>
                                     <Select
                                         value={String(item.vatRate)}
@@ -537,7 +571,7 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                                <div className="col-span-12 sm:col-span-3 md:col-span-2 space-y-2">
+                                <div className="col-span-6 md:col-span-2 space-y-2">
                                     <Label>Totaal</Label>
                                     <div className="flex h-9 items-center rounded-md border bg-muted/50 px-3 font-medium">
                                         {formatCurrency(item.total)}

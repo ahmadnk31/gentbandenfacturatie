@@ -35,7 +35,8 @@ export type PaymentStatus = (typeof PaymentStatus)[keyof typeof PaymentStatus]
 
 
 export const InvoiceStatus = {
-  PAID: 'PAID'
+  PAID: 'PAID',
+  UNPAID: 'UNPAID'
 } as const
 
 export type InvoiceStatus = (typeof InvoiceStatus)[keyof typeof InvoiceStatus]

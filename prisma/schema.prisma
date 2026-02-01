@@ -81,6 +81,7 @@ model Invoice {
 
 enum InvoiceStatus {
   PAID
+  UNPAID
 }
 
 model InvoiceItem {
@@ -88,6 +89,7 @@ model InvoiceItem {
   invoiceId String
 
   description String
+  size        String?
   quantity    Int
   unitPrice   Decimal @db.Decimal(10, 2)
   vatRate     Decimal @db.Decimal(4, 2)
