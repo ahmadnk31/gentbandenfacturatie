@@ -31,7 +31,7 @@ import {
     formatCurrency,
     VAT_RATES,
 } from '@/lib/invoice-utils';
-import { createInvoice, updateInvoice, getCustomerByEmail } from '@/lib/actions';
+import { createInvoice, updateInvoice, getCustomerByEmail, verifyVAT } from '@/lib/actions';
 import { toast } from 'sonner';
 import { InvoiceWithRelations } from '@/types/invoice';
 
@@ -47,6 +47,7 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
     const isEdit = !!initialData;
     const [isLoading, setIsLoading] = useState(false);
     const [isSending, setIsSending] = useState(false);
+    const [isVerifying, setIsVerifying] = useState(false);
 
     // Customer state
     const [customerType, setCustomerType] = useState<'PRIVATE' | 'BUSINESS'>(initialData?.customer.type || 'PRIVATE');
@@ -247,6 +248,29 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
         lookupCustomer();
     }, [customerEmail]);
 
+    const handleVerifyVAT = async () => {
+        if (!customerVatNumber) {
+            toast.error('Vul eerst een BTW-nummer in');
+            return;
+        }
+
+        setIsVerifying(true);
+        try {
+            const result = await verifyVAT(customerVatNumber);
+            if (result.valid) {
+                toast.success('BTW-nummer is geldig');
+                if (result.name) setCustomerName(result.name);
+                if (result.address) setCustomerAddress(result.address.replace(/\n/g, ', '));
+            } else {
+                toast.error('Ongeldig BTW-nummer');
+            }
+        } catch (error: any) {
+            toast.error(error.message || 'Fout bij verifiëren');
+        } finally {
+            setIsVerifying(false);
+        }
+    };
+
     const handleSubmit = async (sendEmail: boolean) => {
         if (!customerName.trim()) {
             toast.error('Vul een klantnaam in');
@@ -379,12 +403,27 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                         {customerType === 'BUSINESS' && (
                             <div className="space-y-2">
                                 <Label htmlFor="vatNumber">BTW-nummer</Label>
-                                <Input
-                                    id="vatNumber"
-                                    value={customerVatNumber}
-                                    onChange={(e) => setCustomerVatNumber(e.target.value)}
-                                    placeholder="NL123456789B01"
-                                />
+                                <div className="flex gap-2">
+                                    <Input
+                                        id="vatNumber"
+                                        value={customerVatNumber}
+                                        onChange={(e) => setCustomerVatNumber(e.target.value.toUpperCase())}
+                                        placeholder="NL123456789B01"
+                                    />
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={handleVerifyVAT}
+                                        disabled={isVerifying || !customerVatNumber}
+                                    >
+                                        {isVerifying ? (
+                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                        ) : (
+                                            'Verifieer'
+                                        )}
+                                    </Button>
+                                </div>
                             </div>
                         )}
                     </CardContent>

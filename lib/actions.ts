@@ -349,4 +349,41 @@ export async function deleteInvoice(id: string): Promise<boolean> {
     }
 }
 
-// Transform function moved to invoice-utils.ts
+// EU VAT Verification using VIES REST API
+export async function verifyVAT(vatNumber: string) {
+    // Strip all non-alphanumeric characters (spaces, dots, etc.)
+    const sanitized = vatNumber.replace(/[^A-Z0-9]/gi, '');
+
+    if (!sanitized || sanitized.length < 3) {
+        throw new Error('Ongeldig BTW-nummer');
+    }
+
+    const countryCode = sanitized.substring(0, 2).toUpperCase();
+    const number = sanitized.substring(2);
+
+    try {
+        // Using the simpler GET request pattern
+        const response = await fetch(`https://ec.europa.eu/taxation_customs/vies/rest-api/ms/${countryCode}/vat/${number}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error(`VIES API Error: ${response.status} ${response.statusText}`, errorText);
+            throw new Error(`VIES service niet bereikbaar (${response.status})`);
+        }
+
+        const data = await response.json();
+        return {
+            valid: data.isValid,
+            name: data.name || '',
+            address: data.address || '',
+        };
+    } catch (error) {
+        console.error('VAT Verification Error:', error);
+        throw new Error('Fout bij verifiëren van BTW-nummer');
+    }
+}
