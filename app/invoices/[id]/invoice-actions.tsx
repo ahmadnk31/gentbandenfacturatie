@@ -2,7 +2,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Send, Download, Loader2, Printer } from 'lucide-react';
+import Link from 'next/link';
+import { Send, Download, Loader2, Printer, Pencil } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InvoiceWithRelations } from '@/types/invoice';
 
@@ -74,6 +75,12 @@ export function InvoiceActions({ invoice }: InvoiceActionsProps) {
 
     return (
         <div className="flex gap-2 overflow-x-auto">
+            <Button variant="outline" asChild>
+                <Link href={`/invoices/${invoice.id}/edit`}>
+                    <Pencil className="mr-2 h-4 w-4" />
+                    Bewerken
+                </Link>
+            </Button>
             <Button variant="outline" onClick={() => window.print()}>
                 <Printer className="mr-2 h-4 w-4" />
                 Afdrukken

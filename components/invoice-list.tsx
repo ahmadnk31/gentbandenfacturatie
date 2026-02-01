@@ -1,11 +1,11 @@
 'use client';
 
 import Link from 'next/link';
-import { formatCurrency, formatDate, getStatusColor } from '@/lib/invoice-utils';
+import { formatCurrency, formatDate, getStatusColor, getPaymentMethodLabel } from '@/lib/invoice-utils';
 import { InvoiceWithRelations } from '@/types/invoice';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Eye, Send, Trash2, MoreHorizontal, Download } from 'lucide-react';
+import { Eye, Send, Trash2, MoreHorizontal, Download, Pencil } from 'lucide-react';
 import { deleteInvoice } from '@/lib/actions';
 import { useRouter } from 'next/navigation';
 import { useState, useOptimistic, useTransition, useMemo } from 'react';
@@ -134,10 +134,31 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                 cell: ({ row }) => formatDate(row.original.issuedAt),
             },
             {
+                id: 'description',
+                header: 'Omschrijving',
+                cell: ({ row }) => {
+                    const descriptions = row.original.items.map((item) => item.description).join(', ');
+                    return (
+                        <div className="max-w-[300px] truncate text-sm text-muted-foreground" title={descriptions}>
+                            {descriptions}
+                        </div>
+                    );
+                },
+            },
+            {
                 accessorKey: 'total',
                 header: 'Bedrag',
                 cell: ({ row }) => (
                     <div className="font-medium">{formatCurrency(row.original.total)}</div>
+                ),
+            },
+            {
+                accessorKey: 'paymentMethod',
+                header: 'Betaalmethode',
+                cell: ({ row }) => (
+                    <div className="text-sm font-medium">
+                        {getPaymentMethodLabel(row.original.paymentMethod)}
+                    </div>
                 ),
             },
             {
@@ -161,6 +182,11 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                                     <Eye className="h-4 w-4" />
                                 </Link>
                             </Button>
+                            <Button variant="ghost" size="icon" asChild title="Bewerken">
+                                <Link href={`/invoices/${invoice.id}/edit`}>
+                                    <Pencil className="h-4 w-4" />
+                                </Link>
+                            </Button>
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -170,17 +196,19 @@ export function InvoiceList({ invoices }: InvoiceListProps) {
                             >
                                 <Download className="h-4 w-4" />
                             </Button>
-                            {invoice.customer.email && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleSend(invoice)}
-                                    disabled={loading === invoice.id}
-                                    title="Versturen via e-mail"
-                                >
-                                    <Send className="h-4 w-4" />
-                                </Button>
-                            )}
+                            {
+                                invoice.customer.email && (
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => handleSend(invoice)}
+                                        disabled={loading === invoice.id}
+                                        title="Versturen via e-mail"
+                                    >
+                                        <Send className="h-4 w-4" />
+                                    </Button>
+                                )
+                            }
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
                                     <Button

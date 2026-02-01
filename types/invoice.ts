@@ -58,6 +58,7 @@ export interface InvoiceWithRelations {
         address: string | null;
         vatNumber: string | null;
     };
+    paymentMethod: 'CASH' | 'PIN' | 'ONLINE';
     items: {
         id: string;
         description: string;

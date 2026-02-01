@@ -30,38 +30,54 @@ import {
     formatCurrency,
     VAT_RATES,
 } from '@/lib/invoice-utils';
-import { createInvoice, getCustomerByEmail } from '@/lib/actions';
+import { createInvoice, updateInvoice, getCustomerByEmail } from '@/lib/actions';
 import { toast } from 'sonner';
+import { InvoiceWithRelations } from '@/types/invoice';
 
 const STORAGE_KEY = 'invoice-form-draft';
 
-export function InvoiceForm() {
+interface InvoiceFormProps {
+    initialData?: InvoiceWithRelations;
+}
+
+export function InvoiceForm({ initialData }: InvoiceFormProps) {
     const router = useRouter();
+    const isEdit = !!initialData;
     const [isLoading, setIsLoading] = useState(false);
     const [isSending, setIsSending] = useState(false);
 
     // Customer state
-    const [customerType, setCustomerType] = useState<'PRIVATE' | 'BUSINESS'>('PRIVATE');
-    const [customerName, setCustomerName] = useState('');
-    const [customerEmail, setCustomerEmail] = useState('');
-    const [customerAddress, setCustomerAddress] = useState('');
-    const [customerVatNumber, setCustomerVatNumber] = useState('');
+    const [customerType, setCustomerType] = useState<'PRIVATE' | 'BUSINESS'>(initialData?.customer.type || 'PRIVATE');
+    const [customerName, setCustomerName] = useState(initialData?.customer.name || '');
+    const [customerEmail, setCustomerEmail] = useState(initialData?.customer.email || '');
+    const [customerAddress, setCustomerAddress] = useState(initialData?.customer.address || '');
+    const [customerVatNumber, setCustomerVatNumber] = useState(initialData?.customer.vatNumber || '');
 
     // Vehicle state
-    const [licensePlate, setLicensePlate] = useState('');
-    const [mileage, setMileage] = useState('');
-    const [vehicleModel, setVehicleModel] = useState('');
+    const [licensePlate, setLicensePlate] = useState(initialData?.licensePlate || '');
+    const [mileage, setMileage] = useState(initialData?.mileage ? String(initialData.mileage) : '');
+    const [vehicleModel, setVehicleModel] = useState(initialData?.vehicleModel || '');
 
     // Payment state
-    const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'PIN' | 'ONLINE'>('PIN');
+    const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'PIN' | 'ONLINE'>(initialData?.paymentMethod || 'PIN');
 
     // Items state
-    const [items, setItems] = useState<InvoiceItemInput[]>([
-        { id: generateItemId(), description: '', quantity: 1, unitPrice: '', vatRate: 21, total: 0 },
-    ]);
+    const [items, setItems] = useState<InvoiceItemInput[]>(
+        initialData?.items.map(item => ({
+            id: item.id,
+            description: item.description,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            vatRate: item.vatRate,
+            total: item.total
+        })) || [
+            { id: generateItemId(), description: '', quantity: 1, unitPrice: '', vatRate: 21, total: 0 },
+        ]
+    );
 
     // Load from local storage
     useEffect(() => {
+        if (isEdit) return; // Don't load draft when editing
         const saved = localStorage.getItem(STORAGE_KEY);
         if (saved) {
             try {
@@ -86,6 +102,7 @@ export function InvoiceForm() {
 
     // Save to local storage
     useEffect(() => {
+        if (isEdit) return; // Don't save draft when editing
         const draft = {
             customerType,
             customerName,
@@ -254,7 +271,12 @@ export function InvoiceForm() {
                 vehicleModel: vehicleModel || undefined,
             };
 
-            const invoice = await createInvoice(input);
+            let invoice;
+            if (isEdit && initialData) {
+                invoice = await updateInvoice(initialData.id, input);
+            } else {
+                invoice = await createInvoice(input);
+            }
 
             if (sendEmail && customerEmail) {
                 const response = await fetch('/api/send-invoice', {
@@ -276,7 +298,9 @@ export function InvoiceForm() {
             router.push(`/invoices/${invoice.id}`);
 
             // Clear draft on success
-            localStorage.removeItem(STORAGE_KEY);
+            if (!isEdit) {
+                localStorage.removeItem(STORAGE_KEY);
+            }
         } catch (error) {
             console.error('Error creating invoice:', error);
             toast.error('Er is een fout opgetreden bij het opslaan');
@@ -575,8 +599,17 @@ export function InvoiceForm() {
                     ) : (
                         <Send className="mr-2 h-4 w-4" />
                     )}
-                    Opslaan & Versturen
+                    {isEdit ? 'Update & Versturen' : 'Opslaan & Versturen'}
                 </Button>
+                {isEdit && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => router.push(`/invoices/${initialData.id}`)}
+                    >
+                        Annuleren
+                    </Button>
+                )}
             </div>
         </div>
     );

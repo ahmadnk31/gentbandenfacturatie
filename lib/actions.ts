@@ -119,6 +119,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceW
                 },
                 include: {
                     customer: true,
+                    payment: true,
                     items: true,
                 },
             });
@@ -147,11 +148,93 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceW
     throw new Error("Unexpected error in createInvoice");
 }
 
+// Update an existing invoice
+export async function updateInvoice(id: string, input: CreateInvoiceInput): Promise<InvoiceWithRelations> {
+    const now = new Date();
+
+    // Get existing invoice to find paymentId
+    const existingInvoice = await prisma.invoice.findUnique({
+        where: { id },
+        select: { paymentId: true, customerId: true }
+    });
+
+    if (!existingInvoice) {
+        throw new Error('Invoice not found');
+    }
+
+    // Calculate totals
+    const subtotal = input.items.reduce((sum, item) => sum + item.total, 0);
+    const vatAmount = input.items.reduce(
+        (sum, item) => sum + (item.total * item.vatRate) / 100,
+        0
+    );
+    const total = subtotal + vatAmount;
+
+    // Update customer info (if it changed)
+    await prisma.customer.update({
+        where: { id: existingInvoice.customerId },
+        data: {
+            type: input.customerType,
+            name: input.customerName,
+            email: input.customerEmail || null,
+            address: input.customerAddress || null,
+            vatNumber: input.customerType === 'BUSINESS' ? input.customerVatNumber : null,
+        },
+    });
+
+    // Update payment
+    await prisma.payment.update({
+        where: { id: existingInvoice.paymentId },
+        data: {
+            amountTotal: new Decimal(total),
+            paymentMethod: input.paymentMethod,
+        },
+    });
+
+    // Update invoice and items
+    // We delete and recreate items for simplicity
+    const invoice = await prisma.invoice.update({
+        where: { id },
+        data: {
+            // Vehicle details
+            licensePlate: input.licensePlate,
+            mileage: input.mileage,
+            vehicleModel: input.vehicleModel,
+
+            subtotal: new Decimal(subtotal),
+            vatAmount: new Decimal(vatAmount),
+            total: new Decimal(total),
+
+            items: {
+                deleteMany: {},
+                create: input.items.map((item) => ({
+                    description: item.description,
+                    quantity: Number(item.quantity) || 0,
+                    unitPrice: new Decimal(item.unitPrice),
+                    vatRate: new Decimal(item.vatRate),
+                    total: new Decimal(item.total),
+                })),
+            },
+        },
+        include: {
+            customer: true,
+            payment: true,
+            items: true,
+        },
+    });
+
+    revalidatePath('/invoices');
+    revalidatePath(`/invoices/${id}`);
+
+    return transformInvoice(invoice);
+}
+
 // Get all invoices
 export async function getAllInvoices(): Promise<InvoiceWithRelations[]> {
     const invoices = await prisma.invoice.findMany({
         include: {
             customer: true,
+            payment: true,
             items: true,
         },
         orderBy: {
@@ -168,6 +251,7 @@ export async function getInvoice(id: string): Promise<InvoiceWithRelations | nul
         where: { id },
         include: {
             customer: true,
+            payment: true,
             items: true,
         },
     });
@@ -288,6 +372,7 @@ function transformInvoice(invoice: any): InvoiceWithRelations {
             address: invoice.customer.address,
             vatNumber: invoice.customer.vatNumber,
         },
+        paymentMethod: invoice.payment.paymentMethod,
         items: invoice.items.map((item: any) => ({
             id: item.id,
             description: item.description,

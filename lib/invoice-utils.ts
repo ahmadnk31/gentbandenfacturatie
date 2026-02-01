@@ -41,3 +41,12 @@ export const VAT_RATES = [
     { value: 9, label: '9% (Laag tarief)' },
     { value: 0, label: '0% (Vrijgesteld)' },
 ];
+
+export function getPaymentMethodLabel(method: string): string {
+    const labels: Record<string, string> = {
+        CASH: 'Contant',
+        PIN: 'PIN',
+        ONLINE: 'Online',
+    };
+    return labels[method] || method;
+}
