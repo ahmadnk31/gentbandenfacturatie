@@ -15,8 +15,17 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Factuur Generator | Maak en verstuur professionele facturen",
-  description: "Maak professionele facturen voor je winkel en verstuur ze direct naar klanten via e-mail.",
+  title: "Gent Banden - Facturatie & Beheer",
+  description: "Professioneel facturatiesysteem voor Gent Bandenservice. Beheer facturen, klanten en bandenvoorraad eenvoudig en efficiënt.",
+  keywords: ["bandencentrale", "gent", "facturatie", "banden", "auto onderhoud", "bandenwissel", "uitlijnen"],
+  authors: [{ name: "Gent Banden" }],
+  openGraph: {
+    title: "Gent Banden - Facturatie & Beheer",
+    description: "Professioneel facturatiesysteem voor Gent Bandenservice.",
+    siteName: "Gent Banden",
+    locale: "nl_BE",
+    type: "website",
+  },
 };
 
 export default function RootLayout({
