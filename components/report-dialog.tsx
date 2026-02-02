@@ -21,7 +21,7 @@ import {
 } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Download, Loader2, FileBarChart } from 'lucide-react';
+import { CalendarIcon, Download, Loader2, FileBarChart, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import { nl } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
@@ -69,6 +69,37 @@ export function ReportDialog() {
     const periodLabel =
         type === 'daily' ? 'Dag' :
             type === 'weekly' ? 'Week' : 'Maand';
+
+    const handlePrint = async () => {
+        setIsLoading(true);
+        try {
+            const response = await fetch('/api/download-report', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ type, date }),
+            });
+
+            if (!response.ok) {
+                throw new Error('Rapportage genereren mislukt');
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            window.open(url, '_blank');
+
+            // Note: We don't revoke the URL immediately here because the new window needs it.
+            // In a real app, you might want to handle cleanup, but for blob URLs in new tabs, 
+            // the browser handles cleanup when the document is unloaded usually.
+
+            toast.success('Rapportage geopend voor afdrukken');
+            setOpen(false);
+        } catch (error) {
+            console.error('Print report error:', error);
+            toast.error('Kon rapportage niet openen');
+        } finally {
+            setIsLoading(false);
+        }
+    };
 
     return (
         <Dialog open={open} onOpenChange={setOpen}>
@@ -135,11 +166,22 @@ export function ReportDialog() {
                         </Popover>
                     </div>
                 </div>
-                <DialogFooter>
+                <DialogFooter className="gap-2 sm:gap-0">
+                    <Button
+                        variant="outline"
+                        onClick={handlePrint}
+                        disabled={isLoading || !date}
+                    >
+                        {isLoading ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Printer className="mr-2 h-4 w-4" />
+                        )}
+                        Afdrukken
+                    </Button>
                     <Button
                         onClick={handleDownload}
                         disabled={isLoading || !date}
-                        className="w-full"
                     >
                         {isLoading ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />

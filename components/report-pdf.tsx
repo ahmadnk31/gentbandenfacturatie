@@ -76,17 +76,25 @@ const styles = StyleSheet.create({
         borderBottomColor: '#EEE',
         minHeight: 25,
         alignItems: 'center',
+        fontSize: 9,
     },
     tableHeader: {
         backgroundColor: '#F5F5F5',
         fontWeight: 'bold',
     },
-    col1: { width: '12%' },
-    col2: { width: '25%' },
-    colMaat: { width: '20%' },
+    tableFooter: {
+        backgroundColor: '#F9F9F9',
+        fontWeight: 'bold',
+        borderTopWidth: 2,
+        borderTopColor: '#DDD',
+    },
+    col1: { width: '17%' },
+    col2: { width: '20%' },
+    colAantal: { width: '8%' },
+    colMaat: { width: '17%' },
     col3: { width: '13%' },
-    col4: { width: '15%' },
-    col5: { width: '15%' },
+    col4: { width: '13%' },
+    col5: { width: '12%' },
     footer: {
         position: 'absolute',
         bottom: 30,
@@ -145,6 +153,7 @@ export const ReportPDF = ({ data }: ReportPDFProps) => {
                         <View style={[styles.tableRow, styles.tableHeader]}>
                             <Text style={styles.col1}>Nummer</Text>
                             <Text style={styles.col2}>Klant</Text>
+                            <Text style={styles.colAantal}>Aant.</Text>
                             <Text style={styles.colMaat}>Maat</Text>
                             <Text style={styles.col3}>Datum</Text>
                             <Text style={styles.col4}>Bedrag</Text>
@@ -156,6 +165,9 @@ export const ReportPDF = ({ data }: ReportPDFProps) => {
                             <View key={inv.id} style={styles.tableRow}>
                                 <Text style={styles.col1}>{inv.invoiceNumber}</Text>
                                 <Text style={styles.col2}>{inv.customer.name}</Text>
+                                <Text style={styles.colAantal}>
+                                    {inv.items.reduce((sum, item) => sum + item.quantity, 0)}
+                                </Text>
                                 <Text style={styles.colMaat}>
                                     {inv.items.map(i => i.size).filter(Boolean).join(', ')}
                                 </Text>
@@ -166,6 +178,23 @@ export const ReportPDF = ({ data }: ReportPDFProps) => {
                                 </Text>
                             </View>
                         ))}
+
+                        {/* Table Footer */}
+                        <View style={[styles.tableRow, styles.tableFooter]}>
+                            <Text style={styles.col1}>TOTAAL</Text>
+                            <Text style={styles.col2}></Text>
+                            <Text style={styles.colAantal}>
+                                {data.invoices.reduce((acc, inv) => acc + inv.items.reduce((s, i) => s + i.quantity, 0), 0)}
+                            </Text>
+                            <Text style={styles.colMaat}>banden</Text>
+                            <Text style={styles.col3}></Text>
+                            <Text style={styles.col4}>
+                                {formatCurrency(data.stats.totalRevenue + data.stats.outstandingAmount)}
+                            </Text>
+                            <Text style={styles.col5}>
+                                {data.stats.paidCount} Betaald / {data.stats.unpaidCount} Open
+                            </Text>
+                        </View>
                     </View>
                 </View>
 

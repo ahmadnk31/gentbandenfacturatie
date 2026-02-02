@@ -89,15 +89,28 @@ export async function getReportData(
     };
 }
 
-export async function getTopTireSizes(limit: number = 5) {
+export async function getTopTireSizes(limit: number = 5, startDate?: Date, endDate?: Date) {
+    const whereClause: any = {
+        AND: [
+            { size: { not: null } },
+            { size: { not: '' } }
+        ]
+    };
+
+    if (startDate && endDate) {
+        whereClause.AND.push({
+            invoice: {
+                issuedAt: {
+                    gte: startDate,
+                    lte: endDate,
+                }
+            }
+        });
+    }
+
     const result = await prisma.invoiceItem.groupBy({
         by: ['size'],
-        where: {
-            AND: [
-                { size: { not: null } },
-                { size: { not: '' } }
-            ]
-        },
+        where: whereClause,
         _count: {
             size: true,
         },

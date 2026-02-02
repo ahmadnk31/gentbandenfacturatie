@@ -162,6 +162,19 @@ export function InvoiceList({ invoices: initialInvoices }: InvoiceListProps) {
                 },
             },
             {
+                id: 'quantity',
+                header: 'Aant.',
+                accessorFn: (row: InvoiceWithRelations) => row.items.reduce((sum, item) => sum + item.quantity, 0),
+                cell: ({ row }) => {
+                    const totalQuantity = row.original.items.reduce((sum, item) => sum + item.quantity, 0);
+                    return (
+                        <div className="text-sm font-medium">
+                            {totalQuantity}
+                        </div>
+                    );
+                },
+            },
+            {
                 id: 'maat',
                 header: 'Maat',
                 accessorFn: (row: InvoiceWithRelations) => row.items.map((item) => item.size).filter(Boolean).join(', '),
