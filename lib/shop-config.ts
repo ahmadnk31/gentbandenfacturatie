@@ -1,15 +1,15 @@
 
 export const shopConfig = {
-    name: 'Gent Bandenservice',
+    name: 'Elyas Nekzad',
     address: 'Dendermondsesteenweg 428',
     city: 'Sint-Amandsberg',
     postalCode: '9040',
     country: 'België',
     phone: '+32 466 19 56 22',
-    email: 'info@arianabandenservice.be',
-    website: 'www.arianabandenservice.be',
+    email: 'info@gentbandenservice.be',
+    website: 'www.gentbandenservice.be',
     taxId: 'BE1032840756',
-    bankAccount: 'IBAN: BE92063645863623',
+    bankAccount: 'IBAN: BE48950227454827',
 };
 
 export const invoiceConfig = {
