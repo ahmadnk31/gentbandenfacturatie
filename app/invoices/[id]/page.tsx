@@ -211,7 +211,7 @@ export default async function InvoicePage({ params }: InvoicePageProps) {
                                     {/* QR Code */}
                                     <div className="mt-4 flex justify-center">
                                         <img
-                                            src={await generateQRCode(generatePaymentString(invoice.total, invoice.invoiceNumber, shopConfig.bankAccount, shopConfig.name))}
+                                            src={await generateQRCode(generatePaymentString(invoice.total, invoice.invoiceNumber, shopConfig.bankAccount, shopConfig.owner))}
                                             alt="Payment QR Code"
                                             className="h-32 w-32"
                                         />

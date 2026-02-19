@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
         // Generate QR Code
         const qrCodeUrl = await generateQRCode(
-            generatePaymentString(invoice.total, invoice.invoiceNumber, shopConfig.bankAccount, shopConfig.name)
+            generatePaymentString(invoice.total, invoice.invoiceNumber, shopConfig.bankAccount, shopConfig.owner)
         );
 
         // Generate PDF

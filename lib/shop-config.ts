@@ -1,6 +1,7 @@
 
 export const shopConfig = {
-    name: 'Elyas Nekzad',
+    name: 'Gent Bandenservice',
+    owner: 'Elyas Nekzad',
     address: 'Dendermondsesteenweg 428',
     city: 'Sint-Amandsberg',
     postalCode: '9040',
