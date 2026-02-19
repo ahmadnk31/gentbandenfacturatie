@@ -25,6 +25,11 @@ export function generatePaymentString(
 ): string {
     const cleanIban = iban.replace('IBAN:', '').replace(/\s/g, '').toUpperCase();
     const amount = `EUR${total.toFixed(2)}`;
+    const beneficiaryName = name
+        .trim()
+        .replace(/\s+/g, ' ')
+        .slice(0, 70);
+    const remittance = `Factuur ${invoiceNumber}`.trim().slice(0, 140);
 
     // EPC-QR Code Standard (Version 002)
     // Service Tag
@@ -39,15 +44,19 @@ export function generatePaymentString(
     // Remittance Reference (Structured - Optional)
     // Remittance Information (Unstructured)
 
-    return `BCD
-002
-1
-SCT
+    const epcLines = [
+        'BCD',
+        '002',
+        '1',
+        'SCT',
+        '',
+        beneficiaryName,
+        cleanIban,
+        amount,
+        '',
+        '',
+        remittance,
+    ];
 
-${name}
-${cleanIban}
-${amount}
-
-
-Factuur ${invoiceNumber}`;
+    return `${epcLines.join('\r\n')}\r\n`;
 }

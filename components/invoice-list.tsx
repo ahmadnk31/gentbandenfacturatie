@@ -144,6 +144,13 @@ export function InvoiceList({ invoices: initialInvoices }: InvoiceListProps) {
                 ),
             },
             {
+                accessorKey: 'licensePlate',
+                header: 'Kenteken',
+                cell: ({ row }) => (
+                    <div className="text-sm font-medium">{row.original.licensePlate || '-'}</div>
+                ),
+            },
+            {
                 accessorKey: 'issuedAt',
                 header: 'Datum',
                 cell: ({ row }) => formatDate(row.original.issuedAt),

@@ -2,14 +2,14 @@
 export const shopConfig = {
     name: 'Gent Bandenservice',
     address: 'Dendermondsesteenweg 428',
-    city: 'Sint-amandsberg',
+    city: 'Sint-Amandsberg',
     postalCode: '9040',
-    country: 'Belgie',
+    country: 'België',
     phone: '+32 466 19 56 22',
     email: 'info@arianabandenservice.be',
     website: 'www.arianabandenservice.be',
-    taxId: '123456789',
-    bankAccount: 'IBAN: BE00 0000 0000 0000',
+    taxId: 'BE1032840756',
+    bankAccount: 'IBAN: BE92063645863623',
 };
 
 export const invoiceConfig = {

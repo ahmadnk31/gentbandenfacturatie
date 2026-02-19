@@ -25,6 +25,14 @@ import {
 } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import { DateRangePicker } from "@/components/ui/date-range-picker"
+import { Button } from "@/components/ui/button"
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Search } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
@@ -101,6 +109,11 @@ export function DataTable<TData, TValue>({
             columnFilters,
             globalFilter,
             sorting,
+        },
+        initialState: {
+            pagination: {
+                pageSize: 10,
+            },
         },
     })
 
@@ -181,6 +194,54 @@ export function DataTable<TData, TValue>({
                         )}
                     </TableBody>
                 </Table>
+            </div>
+
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div className="text-sm text-muted-foreground">
+                    {table.getFilteredRowModel().rows.length} resultaten
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Rijen:</span>
+                    <Select
+                        value={`${table.getState().pagination.pageSize}`}
+                        onValueChange={(value) => {
+                            table.setPageSize(Number(value))
+                        }}
+                    >
+                        <SelectTrigger className="h-8 w-[80px]">
+                            <SelectValue placeholder={table.getState().pagination.pageSize} />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {[10, 20, 30, 50].map((pageSize) => (
+                                <SelectItem key={pageSize} value={`${pageSize}`}>
+                                    {pageSize}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    <div className="text-sm text-muted-foreground px-2">
+                        Pagina {table.getState().pagination.pageIndex + 1} van {table.getPageCount() || 1}
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.previousPage()}
+                        disabled={!table.getCanPreviousPage()}
+                    >
+                        Vorige
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.nextPage()}
+                        disabled={!table.getCanNextPage()}
+                    >
+                        Volgende
+                    </Button>
+                </div>
             </div>
         </div>
     )
