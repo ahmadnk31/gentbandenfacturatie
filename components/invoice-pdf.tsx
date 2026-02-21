@@ -12,6 +12,7 @@ import { shopConfig, invoiceConfig } from '@/lib/shop-config';
 interface InvoicePDFProps {
     invoice: InvoiceWithRelations;
     qrCodeUrl?: string; // Optional QR code data URL
+    logoUrl?: string; // Optional logo data URL
 }
 
 const formatCurrency = (amount: number) => {
@@ -109,7 +110,11 @@ const styles = StyleSheet.create({
         borderBottomColor: '#f3f4f6',
     },
     colDescription: {
-        flex: 4,
+        flex: 3,
+    },
+    colSize: {
+        flex: 1.5,
+        textAlign: 'center',
     },
     colQty: {
         flex: 1,
@@ -195,9 +200,14 @@ const styles = StyleSheet.create({
         color: '#1a1a1a',
         marginTop: 8,
     },
+    logo: {
+        width: 60,
+        height: 60,
+        marginBottom: 8,
+    },
 });
 
-export function InvoicePDF({ invoice, qrCodeUrl }: InvoicePDFProps) {
+export function InvoicePDF({ invoice, qrCodeUrl, logoUrl }: InvoicePDFProps) {
     return (
         <Document>
             <Page size="A4" style={styles.page}>
@@ -205,6 +215,7 @@ export function InvoicePDF({ invoice, qrCodeUrl }: InvoicePDFProps) {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 }}>
                     {/* Left: Shop Info */}
                     <View style={{ width: '50%' }}>
+                        {logoUrl && <Image src={logoUrl} style={styles.logo} />}
                         <Text style={styles.shopName}>{shopConfig.name}</Text>
                         <Text style={styles.shopDetails}>
                             {shopConfig.address}, {shopConfig.postalCode} {shopConfig.city}
@@ -278,6 +289,7 @@ export function InvoicePDF({ invoice, qrCodeUrl }: InvoicePDFProps) {
                 <View style={styles.table}>
                     <View style={styles.tableHeader}>
                         <Text style={[styles.colDescription, styles.headerText]}>Omschrijving</Text>
+                        <Text style={[styles.colSize, styles.headerText]}>Maat</Text>
                         <Text style={[styles.colQty, styles.headerText]}>Aantal</Text>
                         <Text style={[styles.colVat, styles.headerText]}>BTW</Text>
                         <Text style={[styles.colPrice, styles.headerText]}>Prijs</Text>
@@ -286,6 +298,7 @@ export function InvoicePDF({ invoice, qrCodeUrl }: InvoicePDFProps) {
                     {invoice.items.map((item) => (
                         <View key={item.id} style={styles.tableRow}>
                             <Text style={[styles.colDescription, styles.cellText]}>{item.description}</Text>
+                            <Text style={[styles.colSize, styles.cellText]}>{item.size || '-'}</Text>
                             <Text style={[styles.colQty, styles.cellText]}>{item.quantity}</Text>
                             <Text style={[styles.colVat, styles.cellText]}>{item.vatRate}%</Text>
                             <Text style={[styles.colPrice, styles.cellText]}>{formatCurrency(item.unitPrice)}</Text>

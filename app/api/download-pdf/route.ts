@@ -4,6 +4,7 @@ import { InvoicePDF } from '@/components/invoice-pdf';
 import { InvoiceWithRelations } from '@/types/invoice';
 import { shopConfig } from '@/lib/shop-config';
 import { generateQRCode, generatePaymentString } from '@/lib/qr';
+import { getLogoDataUrl } from '@/lib/logo';
 
 export async function POST(request: NextRequest) {
     try {
@@ -21,8 +22,11 @@ export async function POST(request: NextRequest) {
             generatePaymentString(invoice.total, invoice.invoiceNumber, shopConfig.bankAccount, shopConfig.owner)
         );
 
+        // Get logo data URL
+        const logoUrl = await getLogoDataUrl();
+
         // Generate PDF
-        const pdfBuffer = await renderToBuffer(InvoicePDF({ invoice, qrCodeUrl }));
+        const pdfBuffer = await renderToBuffer(InvoicePDF({ invoice, qrCodeUrl, logoUrl }));
 
         // Return PDF as download
         return new NextResponse(new Uint8Array(pdfBuffer), {
