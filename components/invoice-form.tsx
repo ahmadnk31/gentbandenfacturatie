@@ -664,7 +664,13 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                 </Button>
                 <Button
                     type="button"
-                    onClick={() => handleSubmit(true)}
+                    onClick={() => {
+                        if (customerEmail) {
+                            handleSubmit(true);
+                        } else {
+                            toast.error('Voeg eerst een e-mailadres toe');
+                        }
+                    }}
                     disabled={isLoading || isSending || !customerEmail}
                 >
                     {isSending ? (

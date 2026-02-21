@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
         );
 
         // Get logo data URL
-        const logoUrl = await getLogoDataUrl();
+        const logoUrl = getLogoDataUrl();
 
         // Generate PDF
         const pdfBuffer = await renderToBuffer(InvoicePDF({ invoice, qrCodeUrl, logoUrl }));

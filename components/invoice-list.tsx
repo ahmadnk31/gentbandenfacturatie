@@ -114,7 +114,7 @@ export function InvoiceList({ invoices: initialInvoices }: InvoiceListProps) {
             }
         } catch (error) {
             console.error('Error sending invoice:', error);
-            alert('Kon factuur niet verzenden');
+            alert('Kon factuur niet verzonden');
         } finally {
             setLoading(null);
         }
@@ -314,10 +314,13 @@ export function InvoiceList({ invoices: initialInvoices }: InvoiceListProps) {
     }
 
     return (
-        <DataTable
-            columns={columns}
-            data={optimisticInvoices}
-            searchPlaceholder="Zoeken op nummer, klant, maat..."
-        />
+        <>
+            <DataTable
+                columns={columns}
+                data={optimisticInvoices}
+                searchPlaceholder="Zoeken op nummer, klant, maat..."
+            />
+            
+        </>
     );
 }

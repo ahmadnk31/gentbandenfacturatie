@@ -215,7 +215,7 @@ export function InvoicePDF({ invoice, qrCodeUrl, logoUrl }: InvoicePDFProps) {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 30 }}>
                     {/* Left: Shop Info */}
                     <View style={{ width: '50%' }}>
-                        {logoUrl && <Image src={logoUrl} style={styles.logo} />}
+                        {logoUrl ? <Image source={{ uri: logoUrl, data: logoUrl, format: 'jpg' }} style={styles.logo} /> : null}
                         <Text style={styles.shopName}>{shopConfig.name}</Text>
                         <Text style={styles.shopDetails}>
                             {shopConfig.address}, {shopConfig.postalCode} {shopConfig.city}

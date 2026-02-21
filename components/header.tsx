@@ -22,7 +22,7 @@ export function Header() {
                 <Link href="/" className="flex items-center gap-2 font-semibold">
                     <div className="flex items-center justify-center rounded-lg bg-primary/10 p-1">
                         <Image
-                            src="/logo.png"
+                            src="/logo.jpg"
                             alt="Gent Banden Logo"
                             width={42}
                             height={42}
