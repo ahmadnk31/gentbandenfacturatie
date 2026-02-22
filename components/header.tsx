@@ -20,9 +20,9 @@ export function Header() {
         <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
             <div className="container mx-auto flex h-16 items-center gap-4 px-4">
                 <Link href="/" className="flex items-center gap-2 font-semibold">
-                    <div className="flex items-center justify-center rounded-lg bg-primary/10 p-1">
+                    <div className="flex items-center justify-center p-1">
                         <Image
-                            src="/logo.jpg"
+                            src="/logo.JPG"
                             alt="Gent Banden Logo"
                             width={42}
                             height={42}
