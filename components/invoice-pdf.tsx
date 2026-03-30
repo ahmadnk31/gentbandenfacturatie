@@ -73,6 +73,14 @@ const styles = StyleSheet.create({
         fontSize: 9,
         fontWeight: 'bold',
     },
+    unpaidBadge: {
+        backgroundColor: '#fee2e2',
+        color: '#991b1b',
+        padding: '3 10',
+        borderRadius: 4,
+        fontSize: 9,
+        fontWeight: 'bold',
+    },
     section: {
         marginBottom: 16,
     },
@@ -253,7 +261,9 @@ export function InvoicePDF({ invoice, qrCodeUrl, logoUrl }: InvoicePDFProps) {
                     <View style={styles.invoiceMeta}>
                         <Text style={styles.shopDetails}>Datum: {formatDate(invoice.issuedAt)}</Text>
                         <View style={{ marginTop: 8 }}>
-                            <Text style={styles.paidBadge}>BETAALD</Text>
+                            <Text style={invoice.status === 'PAID' ? styles.paidBadge : styles.unpaidBadge}>
+                                {invoice.status === 'PAID' ? 'BETAALD' : 'NIET BETAALD'}
+                            </Text>
                         </View>
                     </View>
                 </View>

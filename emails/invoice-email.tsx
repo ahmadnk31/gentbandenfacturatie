@@ -79,7 +79,9 @@ export function InvoiceEmail({ invoice }: InvoiceEmailProps) {
                             </Column>
                             <Column>
                                 <Text style={label}>Status</Text>
-                                <Text style={paidBadge}>BETAALD</Text>
+                                <Text style={invoice.status === 'PAID' ? paidBadge : unpaidBadge}>
+                                    {invoice.status === 'PAID' ? 'BETAALD' : 'NIET BETAALD'}
+                                </Text>
                             </Column>
                         </Row>
                     </Section>
@@ -284,6 +286,16 @@ const value = {
 const paidBadge = {
     backgroundColor: '#dcfce7',
     color: '#166534',
+    padding: '4px 12px',
+    borderRadius: '9999px',
+    fontSize: '12px',
+    fontWeight: '600',
+    display: 'inline-block',
+};
+
+const unpaidBadge = {
+    backgroundColor: '#fee2e2',
+    color: '#991b1b',
     padding: '4px 12px',
     borderRadius: '9999px',
     fontSize: '12px',
