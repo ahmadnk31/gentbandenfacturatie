@@ -31,6 +31,8 @@ export interface CreateInvoiceInput {
     licensePlate?: string;
     mileage?: number;
     vehicleModel?: string;
+    // Invoice timing
+    issuedAt?: Date;
 }
 
 // Computed invoice with all relations

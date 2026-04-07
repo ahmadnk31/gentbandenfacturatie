@@ -107,7 +107,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceW
                     vatAmount: new Decimal(vatAmount),
                     total: new Decimal(total),
                     status: input.status,
-                    issuedAt: now,
+                    issuedAt: input.issuedAt || now,
                     paidAt: now,
                     items: {
                         create: input.items.map((item) => ({
@@ -208,6 +208,7 @@ export async function updateInvoice(id: string, input: CreateInvoiceInput): Prom
             vatAmount: new Decimal(vatAmount),
             total: new Decimal(total),
             status: input.status,
+            issuedAt: input.issuedAt,
 
             items: {
                 deleteMany: {},

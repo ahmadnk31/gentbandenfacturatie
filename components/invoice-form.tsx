@@ -64,6 +64,11 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
     // Payment state
     const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'PIN' | 'ONLINE'>(initialData?.paymentMethod || 'PIN');
     const [status, setStatus] = useState<'PAID' | 'UNPAID'>(initialData?.status || 'PAID');
+    const [issuedAt, setIssuedAt] = useState<string>(
+        initialData?.issuedAt
+            ? new Date(initialData.issuedAt).toISOString().split('T')[0]
+            : new Date().toISOString().split('T')[0]
+    );
 
     // Items state
     const [items, setItems] = useState<InvoiceItemInput[]>(
@@ -99,6 +104,9 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                 if (parsed.items && parsed.items.length > 0) {
                     setItems(parsed.items);
                 }
+                if (parsed.issuedAt) {
+                    setIssuedAt(parsed.issuedAt);
+                }
             } catch (e) {
                 console.error('Failed to load draft invoice', e);
             }
@@ -119,6 +127,7 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
             vehicleModel,
             paymentMethod,
             status,
+            issuedAt,
             items,
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
@@ -132,6 +141,7 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
         mileage,
         vehicleModel,
         paymentMethod,
+        issuedAt,
         items,
     ]);
 
@@ -294,6 +304,7 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                 customerVatNumber: customerType === 'BUSINESS' ? customerVatNumber : undefined,
                 paymentMethod,
                 status,
+                issuedAt: new Date(issuedAt),
                 items: items.filter((item) => item.description.trim() || (item.size && item.size.trim())),
 
                 // Vehicle details
@@ -465,6 +476,16 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                                     <SelectItem value="UNPAID">Niet Betaald</SelectItem>
                                 </SelectContent>
                             </Select>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="issuedAt">Factuurdatum</Label>
+                            <Input
+                                id="issuedAt"
+                                type="date"
+                                value={issuedAt}
+                                onChange={(e) => setIssuedAt(e.target.value)}
+                            />
                         </div>
 
                         <div className="mt-8 rounded-lg bg-muted/50 p-4">
