@@ -21,7 +21,8 @@ export function generatePaymentString(
     total: number,
     invoiceNumber: string,
     iban: string,
-    name: string
+    name: string,
+    mededeling?: string | null
 ): string {
     const cleanIban = iban.replace('IBAN:', '').replace(/\s/g, '').toUpperCase();
     const amount = `EUR${total.toFixed(2)}`;
@@ -29,7 +30,7 @@ export function generatePaymentString(
         .trim()
         .replace(/\s+/g, ' ')
         .slice(0, 70);
-    const remittance = `Factuur ${invoiceNumber}`.trim().slice(0, 140);
+    const remittance = (mededeling || `Factuur ${invoiceNumber}`).trim().slice(0, 140);
 
     // EPC-QR Code Standard (Version 002)
     // Service Tag

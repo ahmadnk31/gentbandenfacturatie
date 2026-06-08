@@ -16,10 +16,15 @@ export function transformInvoice(invoice: any): InvoiceWithRelations {
         subtotal: Number(invoice.subtotal),
         vatAmount: Number(invoice.vatAmount),
         total: Number(invoice.total),
+        amountPaid: invoice.amountPaid != null ? Number(invoice.amountPaid) : null,
         status: invoice.status,
         issuedAt: invoice.issuedAt,
         paidAt: invoice.paidAt,
         createdAt: invoice.createdAt,
+
+        paymentDeadline: invoice.paymentDeadline ?? null,
+        mededeling: invoice.mededeling ?? null,
+        warning: invoice.warning ?? null,
         customer: {
             id: invoice.customer.id,
             type: invoice.customer.type,
@@ -43,6 +48,23 @@ export function transformInvoice(invoice: any): InvoiceWithRelations {
 
 export function generateItemId(): string {
     return Math.random().toString(36).substring(2, 9);
+}
+
+export function generateStructuredMededeling(): string {
+    // Generate a random 10-digit number
+    const random10 = Math.floor(1000000000 + Math.random() * 9000000000);
+    const mod = random10 % 97;
+    const checkDigits = mod === 0 ? 97 : mod;
+    
+    // Combine to 12 digits, padded with zeros if necessary
+    const full12 = `${random10}${String(checkDigits).padStart(2, '0')}`;
+    
+    // Format as +++AAA/BBBB/CCCCC+++
+    const part1 = full12.slice(0, 3);
+    const part2 = full12.slice(3, 7);
+    const part3 = full12.slice(7, 12);
+    
+    return `+++${part1}/${part2}/${part3}+++`;
 }
 
 export function calculateItemTotal(quantity: number | string, unitPrice: number | string): number {

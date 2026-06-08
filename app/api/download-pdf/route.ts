@@ -18,8 +18,9 @@ export async function POST(request: NextRequest) {
         }
 
         // Generate QR Code
+        const remainingAmount = invoice.amountPaid != null ? Math.max(0, invoice.total - invoice.amountPaid) : invoice.total;
         const qrCodeUrl = await generateQRCode(
-            generatePaymentString(invoice.total, invoice.invoiceNumber, shopConfig.bankAccount, shopConfig.owner)
+            generatePaymentString(remainingAmount, invoice.invoiceNumber, shopConfig.bankAccount, shopConfig.owner, invoice.mededeling)
         );
 
         // Get logo data URL

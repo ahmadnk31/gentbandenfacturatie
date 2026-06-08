@@ -63,9 +63,14 @@ model Invoice {
   mileage      Int?
   vehicleModel String?
 
-  subtotal  Decimal @db.Decimal(10, 2)
-  vatAmount Decimal @db.Decimal(10, 2)
-  total     Decimal @db.Decimal(10, 2)
+  subtotal    Decimal  @db.Decimal(10, 2)
+  vatAmount   Decimal  @db.Decimal(10, 2)
+  total       Decimal  @db.Decimal(10, 2)
+  amountPaid  Decimal? @db.Decimal(10, 2)
+
+  paymentDeadline DateTime?
+  mededeling      String?
+  warning         String?
 
   status   InvoiceStatus
   issuedAt DateTime

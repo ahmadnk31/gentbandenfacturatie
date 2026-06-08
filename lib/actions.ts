@@ -106,9 +106,14 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<InvoiceW
                     subtotal: new Decimal(subtotal),
                     vatAmount: new Decimal(vatAmount),
                     total: new Decimal(total),
+                    amountPaid: input.amountPaid != null ? new Decimal(input.amountPaid) : null,
                     status: input.status,
                     issuedAt: input.issuedAt || now,
                     paidAt: now,
+
+                    paymentDeadline: input.paymentDeadline || null,
+                    mededeling: input.mededeling || null,
+                    warning: input.warning || null,
                     items: {
                         create: input.items.map((item) => ({
                             description: item.description,
@@ -207,8 +212,13 @@ export async function updateInvoice(id: string, input: CreateInvoiceInput): Prom
             subtotal: new Decimal(subtotal),
             vatAmount: new Decimal(vatAmount),
             total: new Decimal(total),
+            amountPaid: input.amountPaid != null ? new Decimal(input.amountPaid) : null,
             status: input.status,
             issuedAt: input.issuedAt,
+
+            paymentDeadline: input.paymentDeadline || null,
+            mededeling: input.mededeling || null,
+            warning: input.warning || null,
 
             items: {
                 deleteMany: {},

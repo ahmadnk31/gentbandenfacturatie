@@ -23,6 +23,7 @@ export interface CreateInvoiceInput {
     // Payment info
     paymentMethod: 'CASH' | 'PIN' | 'ONLINE';
     status: 'PAID' | 'UNPAID';
+    amountPaid?: number;
 
     // Invoice items
     items: InvoiceItemInput[];
@@ -33,6 +34,11 @@ export interface CreateInvoiceInput {
     vehicleModel?: string;
     // Invoice timing
     issuedAt?: Date;
+
+    // Payment details
+    paymentDeadline?: Date;
+    mededeling?: string;
+    warning?: string;
 }
 
 // Computed invoice with all relations
@@ -50,10 +56,15 @@ export interface InvoiceWithRelations {
     subtotal: number;
     vatAmount: number;
     total: number;
+    amountPaid?: number | null;
     status: 'PAID' | 'UNPAID';
     issuedAt: Date;
     paidAt: Date;
     createdAt: Date;
+
+    paymentDeadline?: Date | null;
+    mededeling?: string | null;
+    warning?: string | null;
     customer: {
         id: string;
         type: 'PRIVATE' | 'BUSINESS';

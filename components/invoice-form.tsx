@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useQueryClient } from '@tanstack/react-query';
-import { Plus, Trash2, Send, Save, Loader2, Receipt } from 'lucide-react';
+import { Plus, Trash2, Send, Save, Loader2, Receipt, AlertTriangle, Info, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,6 +27,7 @@ import { CreateInvoiceInput, InvoiceItemInput } from '@/types/invoice';
 import { invoiceConfig } from '@/lib/shop-config';
 import {
     generateItemId,
+    generateStructuredMededeling,
     calculateItemTotal,
     formatCurrency,
     VAT_RATES,
@@ -64,11 +65,24 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
     // Payment state
     const [paymentMethod, setPaymentMethod] = useState<'CASH' | 'PIN' | 'ONLINE'>(initialData?.paymentMethod || 'PIN');
     const [status, setStatus] = useState<'PAID' | 'UNPAID'>(initialData?.status || 'PAID');
+    const [amountPaid, setAmountPaid] = useState<string>(
+        initialData?.amountPaid != null ? String(initialData.amountPaid) : ''
+    );
     const [issuedAt, setIssuedAt] = useState<string>(
         initialData?.issuedAt
             ? new Date(initialData.issuedAt).toISOString().split('T')[0]
             : new Date().toISOString().split('T')[0]
     );
+    const [paymentDeadline, setPaymentDeadline] = useState<string>(
+        initialData?.paymentDeadline
+            ? new Date(initialData.paymentDeadline).toISOString().split('T')[0]
+            : ''
+    );
+    const [mededeling, setMededeling] = useState(() => {
+        if (initialData) return initialData.mededeling || '';
+        return generateStructuredMededeling();
+    });
+    const [warning, setWarning] = useState(initialData?.warning || '');
 
     // Items state
     const [items, setItems] = useState<InvoiceItemInput[]>(
@@ -101,6 +115,10 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                 setMileage(parsed.mileage || '');
                 setVehicleModel(parsed.vehicleModel || '');
                 setPaymentMethod(parsed.paymentMethod || 'PIN');
+                setAmountPaid(parsed.amountPaid || '');
+                setPaymentDeadline(parsed.paymentDeadline || '');
+                setMededeling(parsed.mededeling || '');
+                setWarning(parsed.warning || '');
                 if (parsed.items && parsed.items.length > 0) {
                     setItems(parsed.items);
                 }
@@ -127,7 +145,11 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
             vehicleModel,
             paymentMethod,
             status,
+            amountPaid,
             issuedAt,
+            paymentDeadline,
+            mededeling,
+            warning,
             items,
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(draft));
@@ -141,7 +163,11 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
         mileage,
         vehicleModel,
         paymentMethod,
+        amountPaid,
         issuedAt,
+        paymentDeadline,
+        mededeling,
+        warning,
         items,
     ]);
 
@@ -307,10 +333,14 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                 issuedAt: new Date(issuedAt),
                 items: items.filter((item) => item.description.trim() || (item.size && item.size.trim())),
 
-                // Vehicle details
+                amountPaid: amountPaid !== '' ? parseFloat(amountPaid) : undefined,
                 licensePlate: licensePlate || undefined,
                 mileage: mileage ? parseInt(mileage) : undefined,
                 vehicleModel: vehicleModel || undefined,
+
+                paymentDeadline: paymentDeadline ? new Date(paymentDeadline) : undefined,
+                mededeling: mededeling || undefined,
+                warning: warning || undefined,
             };
 
             let invoice;
@@ -488,7 +518,25 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                             />
                         </div>
 
-                        <div className="mt-8 rounded-lg bg-muted/50 p-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="amountPaid">Betaald bedrag (Optioneel)</Label>
+                            <Input
+                                id="amountPaid"
+                                type="number"
+                                min="0"
+                                step="0.01"
+                                placeholder={`Max: ${total > 0 ? total.toFixed(2) : '0.00'}`}
+                                value={amountPaid}
+                                onChange={(e) => setAmountPaid(e.target.value)}
+                            />
+                            {amountPaid !== '' && total > 0 && (
+                                <p className="text-xs text-muted-foreground">
+                                    Resterend: {formatCurrency(Math.max(0, total - parseFloat(amountPaid || '0')))}
+                                </p>
+                            )}
+                        </div>
+
+                        <div className="mt-6 rounded-lg bg-muted/50 p-4">
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <Receipt className="h-4 w-4" />
                                 <span>Factuur wordt automatisch aangemaakt na opslaan</span>
@@ -497,6 +545,68 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                     </CardContent>
                 </Card>
             </div>
+
+            {/* Payment deadline, Mededeling & Warning */}
+            <Card>
+                <CardHeader>
+                    <CardTitle>Betalingsinfo &amp; Waarschuwing</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                    <div className="grid gap-5 md:grid-cols-2">
+                        <div className="space-y-2">
+                            <Label htmlFor="paymentDeadline">Betalingstermijn (Optioneel)</Label>
+                            <Input
+                                id="paymentDeadline"
+                                type="date"
+                                value={paymentDeadline}
+                                onChange={(e) => setPaymentDeadline(e.target.value)}
+                            />
+                            <p className="text-xs text-muted-foreground">Uiterste datum waarop betaald moet worden</p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="mededeling">Mededeling (Optioneel)</Label>
+                            <div className="flex gap-2">
+                                <Input
+                                    id="mededeling"
+                                    value={mededeling}
+                                    onChange={(e) => setMededeling(e.target.value)}
+                                    placeholder="bijv. +++123/4567/89012+++"
+                                    className="flex-1"
+                                />
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    size="icon"
+                                    onClick={() => setMededeling(generateStructuredMededeling())}
+                                    title="Genereer nieuwe mededeling"
+                                    className="shrink-0"
+                                >
+                                    <RefreshCw className="h-4 w-4" />
+                                </Button>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Vermeld bij overschrijving — verschijnt op de factuur</p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="warning">Waarschuwing / Opmerking (Optioneel)</Label>
+                        <textarea
+                            id="warning"
+                            className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            value={warning}
+                            onChange={(e) => setWarning(e.target.value)}
+                            placeholder="bijv. Bij niet-betaling binnen de termijn worden administratiekosten aangerekend..."
+                            rows={3}
+                        />
+                        {warning && (
+                            <div className="flex gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
+                                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                                <span>{warning}</span>
+                            </div>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
 
             {/* Vehicle Details */}
             <Card>
@@ -663,6 +773,18 @@ export function InvoiceForm({ initialData }: InvoiceFormProps) {
                                 <span>Totaal</span>
                                 <span>{formatCurrency(total)}</span>
                             </div>
+                            {amountPaid !== '' && (
+                                <>
+                                    <div className="flex justify-between text-sm mt-2 text-green-600">
+                                        <span>Betaald</span>
+                                        <span>{formatCurrency(parseFloat(amountPaid || '0'))}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm font-semibold mt-1 text-orange-600">
+                                        <span>Resterend</span>
+                                        <span>{formatCurrency(Math.max(0, total - parseFloat(amountPaid || '0')))}</span>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     </div>
                 </CardContent>

@@ -187,6 +187,47 @@ const styles = StyleSheet.create({
         fontWeight: 'bold',
         color: '#1a1a1a',
     },
+    paidRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        paddingVertical: 3,
+    },
+    paidLabel: {
+        fontSize: 9,
+        color: '#16a34a',
+        fontWeight: 'bold',
+    },
+    paidValue: {
+        fontSize: 9,
+        color: '#16a34a',
+        fontWeight: 'bold',
+    },
+    remainingLabel: {
+        fontSize: 10,
+        color: '#ea580c',
+        fontWeight: 'bold',
+    },
+    remainingValue: {
+        fontSize: 10,
+        color: '#ea580c',
+        fontWeight: 'bold',
+    },
+    warningBox: {
+        marginTop: 16,
+        padding: '8 10',
+        backgroundColor: '#fffbeb',
+        borderWidth: 1,
+        borderColor: '#f59e0b',
+        borderRadius: 4,
+        flexDirection: 'row',
+        gap: 6,
+    },
+    warningText: {
+        fontSize: 8.5,
+        color: '#92400e',
+        flex: 1,
+        lineHeight: 1.5,
+    },
     footer: {
         position: 'absolute',
         bottom: 30,
@@ -260,6 +301,11 @@ export function InvoicePDF({ invoice, qrCodeUrl, logoUrl }: InvoicePDFProps) {
                     </View>
                     <View style={styles.invoiceMeta}>
                         <Text style={styles.shopDetails}>Datum: {formatDate(invoice.issuedAt)}</Text>
+                        {invoice.paymentDeadline && (
+                            <Text style={[styles.shopDetails, { marginTop: 2 }]}>
+                                Betalen voor: {formatDate(invoice.paymentDeadline)}
+                            </Text>
+                        )}
                         <View style={{ marginTop: 8 }}>
                             <Text style={invoice.status === 'PAID' ? styles.paidBadge : styles.unpaidBadge}>
                                 {invoice.status === 'PAID' ? 'BETAALD' : 'NIET BETAALD'}
@@ -332,13 +378,36 @@ export function InvoicePDF({ invoice, qrCodeUrl, logoUrl }: InvoicePDFProps) {
                             <Text style={styles.grandTotalLabel}>Totaal</Text>
                             <Text style={styles.grandTotalValue}>{formatCurrency(invoice.total)}</Text>
                         </View>
+                        {invoice.amountPaid != null && (
+                            <>
+                                <View style={styles.paidRow}>
+                                    <Text style={styles.paidLabel}>Betaald</Text>
+                                    <Text style={styles.paidValue}>{formatCurrency(invoice.amountPaid)}</Text>
+                                </View>
+                                <View style={[styles.paidRow, { borderTopWidth: 1, borderTopColor: '#e5e7eb', paddingTop: 4, marginTop: 2 }]}>
+                                    <Text style={styles.remainingLabel}>Resterend</Text>
+                                    <Text style={styles.remainingValue}>{formatCurrency(Math.max(0, invoice.total - invoice.amountPaid))}</Text>
+                                </View>
+                            </>
+                        )}
                     </View>
                 </View>
+
+                {/* Warning box */}
+                {invoice.warning && (
+                    <View style={styles.warningBox}>
+                        <Text style={[styles.warningText, { fontWeight: 'bold', marginRight: 4 }]}>LET OP:</Text>
+                        <Text style={styles.warningText}>{invoice.warning}</Text>
+                    </View>
+                )}
 
                 {/* Footer */}
                 <View style={styles.footer}>
                     {shopConfig.bankAccount && (
                         <Text style={styles.footerText}>Bank: {shopConfig.bankAccount}</Text>
+                    )}
+                    {invoice.mededeling && (
+                        <Text style={styles.footerText}>Mededeling: {invoice.mededeling}</Text>
                     )}
 
                     {/* QR Code */}

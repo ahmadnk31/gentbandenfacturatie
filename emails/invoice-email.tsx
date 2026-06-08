@@ -77,6 +77,12 @@ export function InvoiceEmail({ invoice }: InvoiceEmailProps) {
                                 <Text style={label}>Factuurdatum</Text>
                                 <Text style={value}>{formatDate(invoice.issuedAt)}</Text>
                             </Column>
+                            {invoice.paymentDeadline && (
+                                <Column>
+                                    <Text style={label}>Vervaldatum</Text>
+                                    <Text style={value}>{formatDate(invoice.paymentDeadline)}</Text>
+                                </Column>
+                            )}
                             <Column>
                                 <Text style={label}>Status</Text>
                                 <Text style={invoice.status === 'PAID' ? paidBadge : unpaidBadge}>
@@ -195,16 +201,50 @@ export function InvoiceEmail({ invoice }: InvoiceEmailProps) {
                                         <Text style={grandTotalValue}>{formatCurrency(invoice.total)}</Text>
                                     </Column>
                                 </Row>
+                                {invoice.amountPaid != null && (
+                                    <>
+                                        <Row>
+                                            <Column>
+                                                <Text style={totalLabelPaid}>Betaald</Text>
+                                            </Column>
+                                            <Column style={{ textAlign: 'right' }}>
+                                                <Text style={totalValuePaid}>{formatCurrency(invoice.amountPaid)}</Text>
+                                            </Column>
+                                        </Row>
+                                        <Hr style={divider} />
+                                        <Row>
+                                            <Column>
+                                                <Text style={remainingLabel}>Resterend</Text>
+                                            </Column>
+                                            <Column style={{ textAlign: 'right' }}>
+                                                <Text style={remainingValue}>{formatCurrency(Math.max(0, invoice.total - invoice.amountPaid))}</Text>
+                                            </Column>
+                                        </Row>
+                                    </>
+                                )}
                             </Column>
                         </Row>
                     </Section>
 
                     <Hr style={divider} />
 
+                    {/* Warning note */}
+                    {invoice.warning && (
+                        <>
+                            <Section style={warningSection}>
+                                <Text style={warningText}><strong>LET OP:</strong> {invoice.warning}</Text>
+                            </Section>
+                            <Hr style={divider} />
+                        </>
+                    )}
+
                     {/* Footer */}
                     <Section style={footer}>
                         {shopConfig.bankAccount && (
                             <Text style={footerText}>Bank: {shopConfig.bankAccount}</Text>
+                        )}
+                        {invoice.mededeling && (
+                            <Text style={footerText}>Mededeling: {invoice.mededeling}</Text>
                         )}
                         <Text style={thankYou}>Bedankt voor uw aankoop!</Text>
                     </Section>
@@ -365,6 +405,49 @@ const thankYou = {
     fontSize: '14px',
     fontWeight: '600',
     marginTop: '20px',
+};
+
+const totalLabelPaid = {
+    color: '#166534',
+    fontSize: '14px',
+    fontWeight: '600',
+    margin: '5px 0',
+};
+
+const totalValuePaid = {
+    color: '#166534',
+    fontSize: '14px',
+    fontWeight: '600',
+    margin: '5px 0',
+};
+
+const remainingLabel = {
+    color: '#c2410c',
+    fontSize: '15px',
+    fontWeight: '700',
+    margin: '8px 0',
+};
+
+const remainingValue = {
+    color: '#c2410c',
+    fontSize: '16px',
+    fontWeight: '700',
+    margin: '8px 0',
+};
+
+const warningSection = {
+    backgroundColor: '#fffbeb',
+    border: '1px solid #f59e0b',
+    borderRadius: '4px',
+    padding: '12px',
+    marginTop: '15px',
+};
+
+const warningText = {
+    color: '#92400e',
+    fontSize: '12px',
+    margin: '0',
+    lineHeight: '18px',
 };
 
 export default InvoiceEmail;
